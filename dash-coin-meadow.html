@@ -102,6 +102,7 @@
     padding: 20px;
     animation: winFadeIn .35s ease both;
   }
+  .win-overlay[hidden] { display: none; }
   @keyframes winFadeIn { from { opacity: 0; } to { opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .win-overlay { animation: none; } }
   .win-card {
