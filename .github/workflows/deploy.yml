@@ -1,0 +1,28 @@
+name: Deploy to server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22 -H 65.109.208.86 >> ~/.ssh/known_hosts
+
+      - name: Deploy game file to server
+        run: |
+          ssh -p 22 p07@65.109.208.86 "mkdir -p /srv/www/p07/"
+          rsync -avz -e "ssh -p 22" dash-coin-meadow.html p07@65.109.208.86:/srv/www/p07/index.html
