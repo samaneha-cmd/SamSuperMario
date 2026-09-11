@@ -6,7 +6,7 @@
 <title>Super Sam</title>
 <meta name="description" content="Main menu for Super Sam — start a new run or resume your last one.">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
 <style>
   :root {
     --page: #15100E;
@@ -15,6 +15,7 @@
     --accent: #E8622A;
     --accent-deep: #A83E12;
     --display: "Titan One", "Trebuchet MS", system-ui, sans-serif;
+    --spooky: "Creepster", "Titan One", "Trebuchet MS", system-ui, sans-serif;
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
   }
 
@@ -52,16 +53,40 @@
     gap: 1.6%;
     text-align: center;
   }
+  .title-wrap { position: relative; display: inline-block; }
   h1 {
-    font-family: var(--display);
-    font-size: clamp(1.9rem, 6.6vw, 3.4rem);
-    line-height: .98;
+    font-family: var(--spooky);
+    font-weight: 400;
+    font-size: clamp(2.3rem, 8vw, 4.2rem);
+    line-height: 1;
     margin: 0;
     color: #FFFCF2;
     text-shadow: 0 3px 0 var(--line), 0 10px 22px rgba(0,0,0,.5);
-    letter-spacing: .01em;
+    letter-spacing: .02em;
   }
   h1 em { font-style: normal; color: var(--accent); }
+  .lava-drips {
+    position: absolute; left: 6%; right: 6%; bottom: -6px; height: 30px;
+    pointer-events: none;
+  }
+  .drip {
+    position: absolute; top: 0; width: 6px; border-radius: 0 0 6px 6px;
+    background: linear-gradient(180deg, #FFC15E 0%, #E8622A 55%, #A83E12 100%);
+    box-shadow: 0 0 8px rgba(232,98,42,.7);
+    animation: dripFlow 3s ease-in-out infinite;
+  }
+  .drip::after {
+    content: ""; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px;
+    border-radius: 50%; background: #E8622A; box-shadow: 0 0 6px rgba(232,98,42,.8);
+    transform: translateX(-50%);
+  }
+  @keyframes dripFlow {
+    0%, 100% { height: 8px; opacity: .85; }
+    50% { height: 24px; opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .drip { animation: none; height: 14px; }
+  }
   .tagline {
     margin: 0 0 .5rem;
     color: #FBF4E8;
@@ -96,6 +121,29 @@
   }
   button.menu-btn:focus-visible { outline: 3px solid #FFF1D2; outline-offset: 3px; }
   .hint { margin: 0; font-size: .76rem; color: #F1EEDC; opacity: .9; }
+  .leaderboard {
+    margin-top: .3rem;
+    background: rgba(20,14,12,.55);
+    border: 1px solid rgba(241,228,211,.25);
+    border-radius: 12px;
+    padding: 10px 16px;
+    max-width: 360px;
+  }
+  .lb-title {
+    margin: 0 0 4px;
+    font-family: var(--spooky);
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: .02em;
+  }
+  .lb-list {
+    margin: 0; padding-left: 1.2em;
+    text-align: left;
+    font-size: .78rem;
+    color: #F1EEDC;
+    display: flex; flex-direction: column; gap: 2px;
+  }
 
   @media (max-width: 480px) {
     .stage { aspect-ratio: 3 / 4; }
@@ -107,16 +155,33 @@
   <div class="stage">
     <div class="scrim"></div>
     <div class="content">
-      <h1>Super <em>Sam</em></h1>
+      <div class="title-wrap">
+        <h1>Super <em>Sam</em></h1>
+        <div class="lava-drips" aria-hidden="true">
+          <span class="drip" style="left:4%; animation-delay:.1s; animation-duration:2.6s;"></span>
+          <span class="drip" style="left:16%; animation-delay:1.4s; animation-duration:3.4s;"></span>
+          <span class="drip" style="left:31%; animation-delay:.7s; animation-duration:2.9s;"></span>
+          <span class="drip" style="left:47%; animation-delay:2s; animation-duration:3.1s;"></span>
+          <span class="drip" style="left:60%; animation-delay:.3s; animation-duration:2.7s;"></span>
+          <span class="drip" style="left:74%; animation-delay:1.7s; animation-duration:3.3s;"></span>
+          <span class="drip" style="left:88%; animation-delay:1s; animation-duration:2.8s;"></span>
+        </div>
+      </div>
       <p class="tagline">The Shadow Tower</p>
       <div class="buttons">
         <button class="menu-btn" id="btnStart">Start</button>
         <button class="menu-btn secondary" id="btnResume" disabled>Resume</button>
       </div>
       <p class="hint" id="resumeHint">No saved game yet — press Start to begin.</p>
+      <div class="leaderboard" id="leaderboard" hidden>
+        <p class="lb-title">Tower Climbers</p>
+        <ol class="lb-list" id="lbList"></ol>
+      </div>
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="cloud.js"></script>
 <script>
   (function () {
     "use strict";
@@ -131,10 +196,18 @@
     if (hasSave()) {
       resumeBtn.disabled = false;
       hint.textContent = "Pick up right where you left off.";
+    } else if (window.SamCloud) {
+      window.SamCloud.loadProgress().then(function (cloud) {
+        if (!cloud) return;
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(cloud)); } catch (e) {}
+        resumeBtn.disabled = false;
+        hint.textContent = "Pick up right where you left off.";
+      });
     }
 
     document.getElementById("btnStart").addEventListener("click", function () {
       try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+      if (window.SamCloud) window.SamCloud.clearProgress();
       location.href = "dash-coin-meadow.html";
     });
 
@@ -142,6 +215,20 @@
       if (resumeBtn.disabled) return;
       location.href = "dash-coin-meadow.html?resume=1";
     });
+
+    if (window.SamCloud) {
+      window.SamCloud.fetchLeaderboard(5).then(function (rows) {
+        if (!rows || !rows.length) return;
+        var list = document.getElementById("lbList");
+        rows.forEach(function (r) {
+          var li = document.createElement("li");
+          var secs = (r.time_ms / 1000).toFixed(1);
+          li.textContent = r.name + " — " + r.coins + " coins, " + r.bonus + " bonus (" + secs + "s)";
+          list.appendChild(li);
+        });
+        document.getElementById("leaderboard").hidden = false;
+      });
+    }
   })();
 </script>
 </body>

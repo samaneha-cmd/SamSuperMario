@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Shadow Tower</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
 <style>
   :root {
     --page: #15100E;
@@ -40,9 +40,10 @@
 
   header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   h1 {
-    font-family: var(--display);
-    font-size: clamp(1.6rem, 5.4vw, 2.5rem);
-    line-height: .98;
+    font-family: "Creepster", var(--display);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 6.2vw, 2.9rem);
+    line-height: 1;
     margin: 0;
     letter-spacing: .01em;
     text-wrap: balance;
@@ -94,6 +95,44 @@
   .cobweb-left { left: 0; }
   .cobweb-right { right: 0; transform: scaleX(1); }
 
+  .win-overlay {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(10, 7, 6, .72);
+    padding: 20px;
+    animation: winFadeIn .35s ease both;
+  }
+  @keyframes winFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .win-overlay { animation: none; } }
+  .win-card {
+    background: var(--panel);
+    border: 3px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 6px 0 var(--line);
+    padding: 22px 26px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .win-title {
+    font-family: "Creepster", var(--display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    margin: 0;
+    color: var(--accent);
+  }
+  .win-stats { margin: 0; font-weight: 800; font-size: .92rem; color: var(--ink); }
+  .win-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .win-note { margin: 0; font-size: .76rem; color: var(--ink-soft); min-height: 1.1em; }
+  #winName {
+    font-family: var(--body); font-size: .85rem;
+    background: var(--page); color: var(--ink);
+    border: 2px solid var(--line); border-radius: 8px;
+    padding: 7px 10px; min-width: 0; flex: 1;
+  }
+  #winName:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
   .pads { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .dpad { display: flex; gap: 10px; }
   button.key {
@@ -138,6 +177,29 @@
   }
   .mini-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
   .mini-btn:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+  .menu-btn {
+    font-family: var(--display);
+    font-size: .95rem;
+    letter-spacing: .03em;
+    color: #FFFCF2;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 11px 22px;
+    cursor: pointer;
+    text-decoration: none; display: inline-block;
+    box-shadow: 0 4px 0 var(--accent-deep), 0 8px 16px rgba(0,0,0,.35);
+    transition: transform .06s ease, box-shadow .06s ease;
+  }
+  .menu-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--accent-deep); }
+  .menu-btn.secondary {
+    background: rgba(255,252,242,.14);
+    border: 2px solid rgba(255,252,242,.7);
+    box-shadow: 0 4px 0 rgba(0,0,0,.35);
+  }
+  .menu-btn.secondary:active { box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  .menu-btn:focus-visible { outline: 3px solid #FFF1D2; outline-offset: 3px; }
 
   @media (max-width: 520px) {
     button.key { height: 70px; min-width: 66px; }
@@ -194,6 +256,21 @@
       <path d="M76 4 Q60 14 50 30 Q66 20 76 4 M76 4 Q58 8 36 6 Q60 18 76 4 M76 4 Q72 22 74 44 Q62 20 76 4"/>
     </g></svg>
     <canvas id="game" width="900" height="500" aria-label="Sam runs across the ashlands toward the shadow tower, collecting star-coins and embermushrooms"></canvas>
+    <div class="win-overlay" id="winOverlay" hidden>
+      <div class="win-card">
+        <p class="win-title">You reached the tower!</p>
+        <p class="win-stats" id="winStats">0 / 8 coins &middot; 0 / 4 bonus &middot; 0.0s</p>
+        <div class="win-row">
+          <input type="text" id="winName" maxlength="24" placeholder="Your name" aria-label="Your name, for the leaderboard">
+          <button class="mini-btn" id="btnSubmitScore">Submit score</button>
+        </div>
+        <p class="win-note" id="winNote">&nbsp;</p>
+        <div class="win-row">
+          <button class="menu-btn" id="btnPlayAgain">Play again</button>
+          <a class="menu-btn secondary" href="index.html">Menu</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="pads">
@@ -218,6 +295,8 @@
   </footer>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="cloud.js"></script>
 <script>
 (function () {
   "use strict";
@@ -303,10 +382,26 @@
         coinCount, bonusCount, x: p.x, y: p.y, ts: Date.now()
       }));
     } catch (e) {}
+    if (window.SamCloud) window.SamCloud.saveProgress({ coinCount, bonusCount, x: p.x, y: p.y });
   }
   function clearProgress() {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    if (window.SamCloud) window.SamCloud.clearProgress();
   }
+  let lastRunStats = null;
+  function submitRunScore(winTick) {
+    lastRunStats = { coins: coinCount, bonus: bonusCount, timeMs: Math.round(winTick * (1000 / 60)) };
+    setTimeout(showWinOverlay, 550);
+  }
+  function showWinOverlay() {
+    const overlay = document.getElementById("winOverlay");
+    const stats = lastRunStats || { coins: coinCount, bonus: bonusCount, timeMs: Math.round(tick * (1000 / 60)) };
+    document.getElementById("winStats").textContent =
+      stats.coins + " / " + TOTAL_COINS + " coins · " + stats.bonus + " / " + TOTAL_BONUS + " bonus · " + (stats.timeMs / 1000).toFixed(1) + "s";
+    document.getElementById("winNote").textContent = window.SamCloud ? "" : "Leaderboard is offline right now.";
+    overlay.hidden = false;
+  }
+  function hideWinOverlay() { document.getElementById("winOverlay").hidden = true; }
   function loadProgress() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
@@ -390,6 +485,22 @@
   bindPad(document.getElementById("btnJump"), "jump");
 
   document.getElementById("btnReset").addEventListener("click", () => { clearProgress(); reset(); });
+
+  document.getElementById("btnPlayAgain").addEventListener("click", () => {
+    hideWinOverlay();
+    clearProgress();
+    reset();
+  });
+  document.getElementById("btnSubmitScore").addEventListener("click", () => {
+    const nameInput = document.getElementById("winName");
+    const note = document.getElementById("winNote");
+    const name = nameInput.value.trim();
+    if (!name) { note.textContent = "Enter a name first."; return; }
+    if (!window.SamCloud || !lastRunStats) { note.textContent = "Leaderboard is offline right now."; return; }
+    note.textContent = "Submitting…";
+    Promise.resolve(window.SamCloud.submitScore({ name, coins: lastRunStats.coins, bonus: lastRunStats.bonus, timeMs: lastRunStats.timeMs }))
+      .then(ok => { note.textContent = ok ? "Saved to the leaderboard!" : "Couldn't reach the leaderboard."; });
+  });
 
   /* ---------------- sound ---------------- */
   let ac = null, soundOn = true;
@@ -502,7 +613,11 @@
           pops.push({ x: mx, y: it.y - 34, life: 46, text: "+1" });
         }
         updateHud();
-        if (coinCount >= TOTAL_COINS && !won) { won = true; winTimer = 0; sfxWin(); for (let k = 0; k < 5; k++) burst(p.x + p.w / 2, p.y, "coin"); }
+        if (coinCount >= TOTAL_COINS && !won) {
+          won = true; winTimer = 0; sfxWin();
+          for (let k = 0; k < 5; k++) burst(p.x + p.w / 2, p.y, "coin");
+          submitRunScore(tick);
+        }
         if (won) clearProgress(); else saveProgress();
       }
     }
@@ -890,40 +1005,28 @@
   const HERO_CAP_BRIM = "#E14C8D";
   const HERO_GLOVE = "#FFFCF2";
   const HERO_SHOE = "#6B4A2A";
-  const HERO_IMG_ASPECT = 748 / 1096;
-  const heroImg = new Image();
-  heroImg.src = "assets/hero.png";
+  const HERO_CLOAK = "#233539";
+  const HERO_CLOAK_DEEP = "#152023";
+  const SWORD_GLOW = "#5AE6FF";
+  const SWORD_CORE = "#E9FEFF";
+
+  function drawSword(bw, bh) {
+    const len = bh * .62, tipY = bh * .28 - len;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(90,230,255,.32)"; ctx.lineWidth = bw * .16;
+    ctx.beginPath(); ctx.moveTo(0, bh * .28); ctx.lineTo(0, tipY); ctx.stroke();
+    ctx.strokeStyle = "rgba(90,230,255,.65)"; ctx.lineWidth = bw * .09;
+    ctx.beginPath(); ctx.moveTo(0, bh * .28); ctx.lineTo(0, tipY); ctx.stroke();
+    ctx.strokeStyle = SWORD_GLOW; ctx.lineWidth = bw * .05;
+    ctx.beginPath(); ctx.moveTo(0, bh * .24); ctx.lineTo(0, tipY); ctx.stroke();
+    ctx.strokeStyle = SWORD_CORE; ctx.lineWidth = bw * .022;
+    ctx.beginPath(); ctx.moveTo(0, bh * .22); ctx.lineTo(0, tipY + bh * .03); ctx.stroke();
+    // hilt
+    ctx.fillStyle = "#4A4A52";
+    rr(-bw * .1, bh * .21, bw * .2, bh * .045, 3); ctx.fill(); outline(1.4);
+  }
 
   function drawHero() {
-    if (heroImg.complete && heroImg.naturalWidth) {
-      drawHeroSprite();
-    } else {
-      drawHeroFallback();
-    }
-  }
-
-  function drawHeroSprite() {
-    const cx = p.x + p.w / 2 - cam.x;
-    const by = p.y + p.h;
-    const sq = p.squash;
-    const sy = 1 + sq * -.14 + (sq < 0 ? .1 : 0);
-    const sx = 1 + sq * .1 + (sq < 0 ? -.06 : 0);
-
-    // shadow
-    ctx.beginPath();
-    ctx.ellipse(cx, GROUND_Y + 6, p.w * .5, 6, 0, 0, 7);
-    ctx.fillStyle = "rgba(10,7,6,.35)"; ctx.fill();
-
-    const drawH = p.h * 2.5;
-    const drawW = drawH * HERO_IMG_ASPECT;
-    ctx.save();
-    ctx.translate(cx, by);
-    ctx.scale(sx * p.face, sy);
-    ctx.drawImage(heroImg, -drawW * .42, -drawH * .92, drawW, drawH);
-    ctx.restore();
-  }
-
-  function drawHeroFallback() {
     const cx = p.x + p.w / 2 - cam.x;
     const by = p.y + p.h;
     const sq = p.squash;
@@ -942,6 +1045,26 @@
 
     const legSwing = p.onGround ? Math.sin(p.phase) * bw * .24 : bw * .12;
     const armSwing = p.onGround ? Math.sin(p.phase + Math.PI) : -0.5;
+    const moving = Math.abs(p.vx) > .3 || !p.onGround;
+    const cloakSway = reduceMotion ? 0 :
+      -p.face * (bw * .2 + Math.min(Math.abs(p.vx), 4.4) * bw * .07) + Math.sin(tick * .05) * bw * .05;
+
+    // cloak (behind everything)
+    ctx.beginPath();
+    ctx.moveTo(-bw * .24, -bh * .86);
+    ctx.quadraticCurveTo(cloakSway * .6 - bw * .12, -bh * .52, cloakSway - bw * .04, -bh * .1);
+    ctx.lineTo(cloakSway + bw * .16, -bh * .02);
+    ctx.lineTo(cloakSway * .55 + bw * .04, -bh * .22);
+    ctx.quadraticCurveTo(bw * .04, -bh * .56, bw * .18, -bh * .86);
+    ctx.closePath();
+    ctx.fillStyle = HERO_CLOAK; ctx.fill(); outline(2.6);
+    ctx.beginPath();
+    ctx.moveTo(-bw * .02, -bh * .8);
+    ctx.quadraticCurveTo(cloakSway * .5 - bw * .02, -bh * .48, cloakSway * .8, -bh * .12);
+    ctx.lineTo(cloakSway * .5 + bw * .05, -bh * .17);
+    ctx.quadraticCurveTo(bw * .02, -bh * .5, bw * .07, -bh * .8);
+    ctx.closePath();
+    ctx.fillStyle = HERO_CLOAK_DEEP; ctx.fill();
 
     // legs (overalls)
     ctx.fillStyle = HERO_OVERALLS;
@@ -953,7 +1076,7 @@
     rr(bw * .04 - legSwing * .5, -bh * .06, bw * .26, bh * .09, 5); ctx.fill(); outline(2);
 
     // back arm (behind torso)
-    ctx.save(); ctx.translate(bw * .3, -bh * .78); ctx.rotate(armSwing * .5);
+    ctx.save(); ctx.translate(p.face * bw * .3, -bh * .78); ctx.rotate(p.face * armSwing * .5);
     rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(2.2);
     ctx.beginPath(); ctx.arc(0, bh * .3, bw * .085, 0, 7); ctx.fillStyle = HERO_GLOVE; ctx.fill(); outline(2);
     ctx.restore();
@@ -977,10 +1100,12 @@
     // belt
     ctx.fillStyle = HERO_OVERALLS_DEEP; ctx.fillRect(-bw * .34, -bh * .4, bw * .68, bh * .045);
 
-    // front arm
-    ctx.save(); ctx.translate(-bw * .3, -bh * .78); ctx.rotate(-armSwing * .5);
-    rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(2.2);
-    ctx.beginPath(); ctx.arc(0, bh * .3, bw * .085, 0, 7); ctx.fillStyle = HERO_GLOVE; ctx.fill(); outline(2);
+    // front arm — raised, wielding the glowing sword
+    const raise = moving ? .95 : .8 + Math.sin(tick * .04) * .05;
+    ctx.save(); ctx.translate(-p.face * bw * .3, -bh * .78); ctx.rotate(-p.face * (raise + armSwing * .12));
+    drawSword(bw, bh);
+    rr(-bw * .07, 0, bw * .14, bh * .28, 7); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(2.2);
+    ctx.beginPath(); ctx.arc(0, bh * .27, bw * .095, 0, 7); ctx.fillStyle = HERO_GLOVE; ctx.fill(); outline(2);
     ctx.restore();
 
     // head
@@ -1140,9 +1265,16 @@
     window.claude.hot.ready(start);
   } else if (window.claude?.hot?.data) {
     start(window.claude.hot.data);
+  } else if (!wantResume) {
+    clearProgress();
+    start(null);
   } else {
-    if (!wantResume) clearProgress();
-    start(wantResume ? loadProgress() : null);
+    const local = loadProgress();
+    if (local || !window.SamCloud) {
+      start(local);
+    } else {
+      window.SamCloud.loadProgress().then(cloud => start(cloud), () => start(null));
+    }
   }
 })();
 </script>
