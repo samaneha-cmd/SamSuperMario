@@ -3,41 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dash's Coin Meadow</title>
+<title>The Shadow Tower</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
 <style>
   :root {
-    --page: #FCEAF6;
-    --panel: #FFFBFE;
-    --ink: #3A1F35;
-    --ink-soft: #8A6B84;
-    --line: #341530;
-    --accent: #FF6FA5;
-    --accent-deep: #C22E70;
-    --leaf: #33B8A0;
-    --gold: #FFD166;
-    --shadow: rgba(52, 21, 48, .22);
+    --page: #15100E;
+    --panel: #241C1A;
+    --ink: #F1E4D3;
+    --ink-soft: #BC9C86;
+    --line: #0A0706;
+    --accent: #E8622A;
+    --accent-deep: #A83E12;
+    --leaf: #E8B23A;
+    --gold: #D9A441;
+    --shadow: rgba(0, 0, 0, .5);
     --display: "Titan One", "Trebuchet MS", system-ui, sans-serif;
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --page: #1E1425;
-      --panel: #2B1E33;
-      --ink: #F6E9F2;
-      --ink-soft: #C3A6C0;
-      --line: #120B16;
-      --shadow: rgba(0, 0, 0, .45);
-    }
-  }
-  :root[data-theme="dark"] {
-    --page: #1E1425;
-    --panel: #2B1E33;
-    --ink: #F6E9F2;
-    --ink-soft: #C3A6C0;
-    --line: #120B16;
-    --shadow: rgba(0, 0, 0, .45);
   }
 
   body {
@@ -99,7 +81,7 @@
     border: 4px solid var(--line);
     border-radius: 20px;
     overflow: hidden;
-    background: #E3B3F2;
+    background: #3A1F1A;
     box-shadow: 0 8px 0 var(--line), 0 18px 30px var(--shadow);
     line-height: 0;
   }
@@ -165,13 +147,13 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>Dash's <em>Coin</em> Meadow</h1>
-      <p class="tagline">Run, hop the stumps and stones, and grab every coin. Keep an eye out for bonus mushrooms hidden up high — each one makes Dash grow.</p>
+      <h1>The Shadow <em>Tower</em></h1>
+      <p class="tagline">Cross the ashlands and climb toward the tower, grabbing every star-coin along the way. Keep an eye out for glowing embermushrooms hidden up high — each one makes Sam grow.</p>
     </div>
     <div class="hud">
       <div class="stat">
         <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-          <circle cx="14" cy="14" r="11.5" fill="#FFD166" stroke="#2B3B21" stroke-width="2.4"/>
+          <circle cx="14" cy="14" r="11.5" fill="#FFD166" stroke="#150F0E" stroke-width="2.4"/>
           <circle cx="14" cy="14" r="7" fill="none" stroke="#B9862B" stroke-width="2"/>
           <circle cx="10.5" cy="10.5" r="2.4" fill="#FFF1D2"/>
         </svg>
@@ -180,10 +162,10 @@
       <div class="divider" aria-hidden="true"></div>
       <div class="stat">
         <svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true">
-          <ellipse cx="15" cy="25" rx="5.5" ry="3.2" fill="#FFF1D2" stroke="#2B3B21" stroke-width="2"/>
-          <path d="M3.5 15.5C3.5 8.8 8.7 4 15 4s11.5 4.8 11.5 11.5c0 1.6-1.2 2.6-3 2.6H6.5c-1.8 0-3-1-3-2.6Z" fill="#E4572E" stroke="#2B3B21" stroke-width="2"/>
-          <circle cx="10.5" cy="11" r="2" fill="#FFF1D2"/>
-          <circle cx="19" cy="12.5" r="1.5" fill="#FFF1D2"/>
+          <ellipse cx="15" cy="25" rx="5.5" ry="3.2" fill="#D8C4A8" stroke="#150F0E" stroke-width="2"/>
+          <path d="M3.5 15.5C3.5 8.8 8.7 4 15 4s11.5 4.8 11.5 11.5c0 1.6-1.2 2.6-3 2.6H6.5c-1.8 0-3-1-3-2.6Z" fill="#C1451F" stroke="#150F0E" stroke-width="2"/>
+          <circle cx="10.5" cy="11" r="2" fill="#FFC15E"/>
+          <circle cx="19" cy="12.5" r="1.5" fill="#FFC15E"/>
         </svg>
         <div class="count small" id="bonusLabel">0 <small>/ 4 bonus</small></div>
       </div>
@@ -288,15 +270,11 @@
   for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 3 });
   const HILLS = [];
   for (let i = 0; i < 16; i++) HILLS.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
-  const DRAGONS = [
-    { x: 260, y: 130, s: .8, seed: 0 },
-    { x: 980, y: 90, s: 1.05, seed: 1.4 },
-    { x: 1760, y: 150, s: .9, seed: 2.7 },
-    { x: 2520, y: 100, s: 1.1, seed: 4.1 },
-    { x: 3180, y: 140, s: .85, seed: 5.5 }
-  ];
-  const dragonImg = new Image();
-  dragonImg.src = "assets/dragon.png";
+  const RAVENS = [];
+  for (let i = 0; i < 11; i++) {
+    RAVENS.push({ x: 180 + i * 330 + (i * 71 % 90), y: 70 + (i * 53 % 90), s: .7 + (i * 41 % 60) / 100, seed: i * 1.7 });
+  }
+  const TOWER_X = GOAL_X + 60;
 
   /* ---------------- save / resume ---------------- */
   const SAVE_KEY = "ssm.dashCoinMeadow.save";
@@ -527,7 +505,7 @@
 
   function burst(x, y, kind) {
     const colors = kind === "bonus"
-      ? ["#E4572E", "#FFD166", "#7FD44A", "#FFF1D2"]
+      ? ["#C1451F", "#E8B23A", "#E8622A", "#FFC15E"]
       : ["#FFD166", "#FFF1D2", "#B9862B", "#FFE9A6"];
     const n = reduceMotion ? 6 : 16;
     for (let i = 0; i < n; i++) {
@@ -567,45 +545,51 @@
     ctx.arcTo(x, y, x + w, y, rad);
     ctx.closePath();
   }
-  function outline(w) { ctx.lineWidth = w || 3; ctx.strokeStyle = "#2B3B21"; ctx.lineJoin = "round"; ctx.stroke(); }
+  function outline(w) { ctx.lineWidth = w || 3; ctx.strokeStyle = "#150F0E"; ctx.lineJoin = "round"; ctx.stroke(); }
 
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, GROUND_Y + 20);
-    g.addColorStop(0, "#F6B9E0");
-    g.addColorStop(.45, "#E3B3F2");
-    g.addColorStop(1, "#FBE3E0");
+    g.addColorStop(0, "#1D1420");
+    g.addColorStop(.4, "#5A2430");
+    g.addColorStop(.75, "#9A4A2C");
+    g.addColorStop(1, "#C97A3E");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // candy sun
-    const sx = 770, sy = 92, rays = reduceMotion ? 0 : tick * .0035;
+    // smoldering sun
+    const sx = 770, sy = 100, rays = reduceMotion ? 0 : tick * .0025;
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate(rays);
-    ctx.fillStyle = "rgba(255, 214, 245, .4)";
+    ctx.fillStyle = "rgba(232, 98, 42, .28)";
     for (let i = 0; i < 12; i++) {
       ctx.rotate(Math.PI / 6);
-      ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(9, -96); ctx.lineTo(-9, -96); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(8, -82); ctx.lineTo(-8, -82); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
-    ctx.beginPath(); ctx.arc(sx, sy, 42, 0, 7); ctx.fillStyle = "#FFE180"; ctx.fill(); outline(3);
-    ctx.fillStyle = "#FFF2B8"; ctx.beginPath(); ctx.arc(sx - 12, sy - 12, 13, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, 36, 0, 7); ctx.fillStyle = "#C1451F"; ctx.fill(); outline(3);
+    ctx.fillStyle = "#E8783C"; ctx.beginPath(); ctx.arc(sx - 10, sy - 10, 11, 0, 7); ctx.fill();
 
-    // hills
+    // the distant tower, looming beyond the ridgeline
+    drawTower();
+
+    // hills / ash ridges
     for (const hl of HILLS) {
       const x = hl.x - cam.x * .35;
       if (x < -400 || x > W + 400) continue;
       ctx.beginPath(); ctx.arc(x, GROUND_Y + 20, hl.r, Math.PI, 0); ctx.closePath();
-      ctx.fillStyle = "#C79BE8"; ctx.fill();
+      ctx.fillStyle = "#2E2126"; ctx.fill();
+      ctx.strokeStyle = "rgba(232,98,42,.35)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, GROUND_Y + 20, hl.r, Math.PI, 0); ctx.stroke();
     }
     for (const hl of HILLS) {
       const x = hl.x * .8 + 140 - cam.x * .55;
       if (x < -360 || x > W + 360) continue;
       ctx.beginPath(); ctx.arc(x, GROUND_Y + 30, hl.r * .8, Math.PI, 0); ctx.closePath();
-      ctx.fillStyle = "#B37FDC"; ctx.fill();
+      ctx.fillStyle = "#3E2B30"; ctx.fill();
     }
 
-    // clouds
+    // smoke clouds
     for (const c of CLOUDS) {
       const x = c.x - cam.x * .28 + (reduceMotion ? 0 : Math.sin(tick * .002 + c.x) * 6);
       const wx = ((x % (WORLD * .6)) + WORLD * .6) % (WORLD * .6);
@@ -613,94 +597,120 @@
       cloud(wx, c.y, c.s);
     }
 
-    // dragons
-    for (const d of DRAGONS) {
+    // ravens
+    for (const d of RAVENS) {
       const x = d.x - cam.x * .5 + (reduceMotion ? 0 : Math.sin(tick * .01 + d.seed) * 18);
       const wx = ((x % (WORLD * .9)) + WORLD * .9) % (WORLD * .9);
-      if (wx < -140 || wx > W + 140) continue;
-      drawDragon(wx, d.y + (reduceMotion ? 0 : Math.sin(tick * .05 + d.seed) * 10), d.s);
+      if (wx < -60 || wx > W + 60) continue;
+      drawRaven(wx, d.y + (reduceMotion ? 0 : Math.sin(tick * .05 + d.seed) * 10), d.s, d.seed);
     }
+  }
+  function drawTower() {
+    const tx = 700 - cam.x * .08;
+    const grow = 1 + Math.min(1, cam.x / (WORLD - W)) * .5;
+    const baseY = GROUND_Y + 16;
+    ctx.save(); ctx.translate(tx, baseY); ctx.scale(grow, grow);
+    ctx.fillStyle = "#241A1E";
+    ctx.beginPath();
+    ctx.moveTo(-34, 0); ctx.lineTo(-30, -150); ctx.lineTo(-14, -178); ctx.lineTo(-14, -150);
+    ctx.lineTo(-4, -190); ctx.lineTo(4, -150); ctx.lineTo(14, -178); ctx.lineTo(14, -150);
+    ctx.lineTo(30, -150); ctx.lineTo(34, 0); ctx.closePath();
+    ctx.fill(); outline(3);
+    ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-14, -20); ctx.lineTo(-14, -145); ctx.moveTo(14, -20); ctx.lineTo(14, -145); ctx.stroke();
+    // glowing beacon
+    const pulse = reduceMotion ? .8 : .7 + Math.sin(tick * .05) * .25;
+    const gg = ctx.createRadialGradient(0, -158, 1, 0, -158, 22 * pulse);
+    gg.addColorStop(0, "rgba(255,190,90,.9)");
+    gg.addColorStop(1, "rgba(255,120,40,0)");
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.arc(0, -158, 22 * pulse, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -158, 8, 0, 7); ctx.fillStyle = "#FFC15E"; ctx.fill(); outline(2);
+    ctx.restore();
   }
   function cloud(x, y, s) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
     ctx.beginPath();
     ctx.arc(-34, 8, 22, 0, 7); ctx.arc(-4, -6, 30, 0, 7); ctx.arc(32, 6, 24, 0, 7);
     ctx.rect(-36, 8, 70, 18);
-    ctx.fillStyle = "#FFFFFF"; ctx.fill();
-    ctx.beginPath(); ctx.arc(-4, -2, 28, 0, 7); ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill();
+    ctx.fillStyle = "rgba(90,66,66,.55)"; ctx.fill();
+    ctx.beginPath(); ctx.arc(-4, -2, 28, 0, 7); ctx.fillStyle = "rgba(110,80,80,.55)"; ctx.fill();
     ctx.restore();
   }
-  function drawDragon(x, y, s) {
-    if (dragonImg && dragonImg.complete && dragonImg.naturalWidth) {
-      const flap = reduceMotion ? 1 : .82 + Math.abs(Math.sin(tick * .12 + x)) * .18;
-      const w = 92 * s, h = 92 * s;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(1, flap);
-      ctx.drawImage(dragonImg, -w / 2, -h / 2, w, h);
-      ctx.restore();
-      return;
-    }
-    // fallback vector dragon while the sprite loads
+  function drawRaven(x, y, s, seed) {
+    const flap = reduceMotion ? .4 : Math.sin(tick * .25 + seed) * .5;
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.fillStyle = "#FF7FC1";
-    ctx.beginPath(); ctx.ellipse(0, 0, 26, 16, 0, 0, 7); ctx.fill(); outline(2.4);
-    ctx.beginPath(); ctx.ellipse(20, -4, 11, 9, 0, 0, 7); ctx.fill(); outline(2);
-    ctx.fillStyle = "#FFD3EC";
-    ctx.beginPath(); ctx.ellipse(-6, -18, 16, 9, .5, 0, 7); ctx.fill(); outline(2);
+    ctx.strokeStyle = "#0A0706"; ctx.lineWidth = 2.6; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-14, 4 - flap * 6); ctx.quadraticCurveTo(-6, -4, 0, 1);
+    ctx.quadraticCurveTo(6, -4, 14, 4 - flap * 6);
+    ctx.stroke();
     ctx.restore();
   }
 
   function drawGround() {
-    ctx.fillStyle = "#C98FB0";
+    ctx.fillStyle = "#4A3B3C";
     ctx.fillRect(0, GROUND_Y + 22, W, H - GROUND_Y);
-    ctx.fillStyle = "#B5789C";
+    ctx.fillStyle = "#3A2D2F";
     for (let i = 0; i < 60; i++) {
       const gx = (i * 70 - cam.x * 1) % (W + 140);
       const x = ((gx % (W + 140)) + W + 140) % (W + 140) - 70;
       ctx.fillRect(x, GROUND_Y + 46 + (i % 3) * 18, 26, 9);
     }
-    ctx.fillStyle = "#6FD4C4";
+    // scattered glowing lava cracks through the ash
+    const CRACK_SPAN = W + 260;
+    ctx.strokeStyle = "#E8622A"; ctx.lineWidth = 1.6; ctx.lineCap = "round"; ctx.globalAlpha = .65;
+    for (let i = 0; i < 9; i++) {
+      const gx = (i * 260 + 40 - cam.x) % CRACK_SPAN;
+      const x = ((gx % CRACK_SPAN) + CRACK_SPAN) % CRACK_SPAN - 130;
+      const drop = 10 + (i * 53 % 14);
+      const ey = GROUND_Y + 34 + drop;
+      ctx.beginPath();
+      ctx.moveTo(x, GROUND_Y + 30);
+      ctx.lineTo(x + 6, GROUND_Y + 34 + drop * .4);
+      ctx.lineTo(x - 2, GROUND_Y + 34 + drop * .7);
+      ctx.lineTo(x + 5, ey);
+      ctx.stroke();
+      ctx.globalAlpha = .35;
+      ctx.beginPath(); ctx.ellipse(x + 4, ey, 5, 2.2, 0, 0, 7); ctx.fillStyle = "#FFC15E"; ctx.fill();
+      ctx.globalAlpha = .65;
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#585052";
     ctx.fillRect(0, GROUND_Y, W, 24);
-    ctx.fillStyle = "#4FB8A6";
+    ctx.fillStyle = "#443A3C";
     ctx.fillRect(0, GROUND_Y + 18, W, 6);
-    // candy-grass blades
-    ctx.fillStyle = "#8FE6D6";
+    // embered edge instead of grass
+    ctx.fillStyle = "#E8B23A";
     for (let i = 0; i < 90; i++) {
       const bx = i * 22 - (cam.x % 22) - 22;
-      const hh = 6 + (i * 37 % 7);
+      const hh = 4 + (i * 37 % 5);
       ctx.beginPath(); ctx.moveTo(bx, GROUND_Y + 1); ctx.lineTo(bx + 4, GROUND_Y - hh); ctx.lineTo(bx + 8, GROUND_Y + 1); ctx.closePath(); ctx.fill();
     }
-    ctx.strokeStyle = "#2B3B21"; ctx.lineWidth = 3;
+    ctx.strokeStyle = "#0A0706"; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
 
-    // lollipops & candy-cane trees in front of the ground line
+    // scorched rocks, dead trees & ember pits along the ground line
     for (const b of BUSHES) {
       const x = b.x - cam.x * .92;
       if (x < -120 || x > W + 120) continue;
       ctx.save(); ctx.translate(x, GROUND_Y + 4); ctx.scale(b.s, b.s);
       if (b.kind === 0) {
-        // lollipop
-        ctx.strokeStyle = "#F1EEDC"; ctx.lineWidth = 5; ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
-        ctx.beginPath(); ctx.arc(0, -42, 16, 0, 7);
-        ctx.fillStyle = "#FF6FA5"; ctx.fill(); outline(2.4);
-        ctx.strokeStyle = "#FFD1E8"; ctx.lineWidth = 2.4;
-        ctx.beginPath(); ctx.arc(0, -42, 10, .3, 4.2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(0, -42, 5, .6, 3.6); ctx.stroke();
-      } else if (b.kind === 1) {
-        // candy-cane striped tree trunk with a puffy top
-        ctx.fillStyle = "#F1EEDC"; ctx.fillRect(-4, -34, 8, 34); outline(2);
-        ctx.strokeStyle = "#FF6FA5"; ctx.lineWidth = 3;
-        for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-4, -6 - k * 8); ctx.lineTo(4, -12 - k * 8); ctx.stroke(); }
+        // jagged dark rock spike
         ctx.beginPath();
-        ctx.arc(-16, -40, 15, Math.PI, 0); ctx.arc(2, -50, 19, Math.PI, 0); ctx.arc(20, -40, 14, Math.PI, 0);
-        ctx.fillStyle = "#FFC2E2"; ctx.fill(); outline(2.4);
+        ctx.moveTo(-16, 0); ctx.lineTo(-10, -28); ctx.lineTo(-1, -14); ctx.lineTo(6, -34); ctx.lineTo(14, -6); ctx.lineTo(18, 0);
+        ctx.closePath();
+        ctx.fillStyle = "#332628"; ctx.fill(); outline(2.4);
+      } else if (b.kind === 1) {
+        // dead charred tree
+        ctx.strokeStyle = "#1C1516"; ctx.lineWidth = 5; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -34); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(-16, -34); ctx.moveTo(0, -26); ctx.lineTo(15, -40); ctx.moveTo(0, -34); ctx.lineTo(-10, -48); ctx.stroke();
       } else {
-        // small swirl candy
-        ctx.beginPath(); ctx.arc(0, -14, 13, 0, 7); ctx.fillStyle = "#B7A6F2"; ctx.fill(); outline(2.2);
-        ctx.strokeStyle = "#F1EEDC"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, -14, 8, .3, 4.6); ctx.stroke();
+        // small ember pit
+        ctx.beginPath(); ctx.ellipse(0, -3, 13, 6, 0, 0, 7); ctx.fillStyle = "#241A1B"; ctx.fill(); outline(2);
+        const glow = reduceMotion ? .8 : .6 + Math.sin(tick * .1 + b.x) * .3;
+        ctx.beginPath(); ctx.ellipse(0, -3, 7 * glow, 3 * glow, 0, 0, 7); ctx.fillStyle = "#E8622A"; ctx.fill();
       }
       ctx.restore();
     }
@@ -710,27 +720,27 @@
     const x = s.x - cam.x;
     if (x + s.w < -40 || x > W + 40) return;
     if (s.kind === "stone") {
-      rr(x, s.y, s.w, s.h, 12); ctx.fillStyle = "#A8A79C"; ctx.fill(); outline(3);
-      ctx.fillStyle = "#C4C3B8"; rr(x + 7, s.y + 7, s.w - 26, 10, 5); ctx.fill();
-      ctx.fillStyle = "#8E8D83"; ctx.fillRect(x + 10, s.y + s.h - 16, s.w - 20, 5);
+      rr(x, s.y, s.w, s.h, 12); ctx.fillStyle = "#6B6670"; ctx.fill(); outline(3);
+      ctx.fillStyle = "#8C8894"; rr(x + 7, s.y + 7, s.w - 26, 10, 5); ctx.fill();
+      ctx.fillStyle = "#4A4650"; ctx.fillRect(x + 10, s.y + s.h - 16, s.w - 20, 5);
     } else if (s.kind === "crate") {
-      rr(x, s.y, s.w, s.h, 8); ctx.fillStyle = "#D89B4F"; ctx.fill(); outline(3);
-      ctx.strokeStyle = "#A9702F"; ctx.lineWidth = 4;
+      rr(x, s.y, s.w, s.h, 8); ctx.fillStyle = "#6B4A32"; ctx.fill(); outline(3);
+      ctx.strokeStyle = "#3D2A1C"; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.moveTo(x + 5, s.y + 5); ctx.lineTo(x + s.w - 5, s.y + s.h - 5);
       ctx.moveTo(x + s.w - 5, s.y + 5); ctx.lineTo(x + 5, s.y + s.h - 5); ctx.stroke();
     } else if (s.kind === "plank") {
-      rr(x, s.y, s.w, s.h, 9); ctx.fillStyle = "#C98A4B"; ctx.fill(); outline(3);
-      ctx.fillStyle = "#E0A868"; rr(x + 6, s.y + 5, s.w - 12, 7, 4); ctx.fill();
-      ctx.fillStyle = "#8FE6D6";
+      rr(x, s.y, s.w, s.h, 9); ctx.fillStyle = "#5C4130"; ctx.fill(); outline(3);
+      ctx.fillStyle = "#7A5A42"; rr(x + 6, s.y + 5, s.w - 12, 7, 4); ctx.fill();
+      ctx.fillStyle = "#E8622A";
       for (let i = 0; i < 3; i++) {
         const gx = x + 14 + i * (s.w - 28) / 2;
         ctx.beginPath(); ctx.moveTo(gx, s.y + 1); ctx.lineTo(gx + 5, s.y - 9); ctx.lineTo(gx + 10, s.y + 1); ctx.closePath(); ctx.fill();
       }
     } else if (s.kind === "stump") {
-      rr(x, s.y, s.w, s.h, 10); ctx.fillStyle = "#9C6B3F"; ctx.fill(); outline(3);
-      ctx.fillStyle = "#C08B55"; rr(x + 4, s.y + 4, s.w - 8, 14, 7); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x + s.w / 2, s.y + 11, s.w * .22, 4, 0, 0, 7); ctx.fillStyle = "#E2B681"; ctx.fill();
-      ctx.fillStyle = "#82562F";
+      rr(x, s.y, s.w, s.h, 10); ctx.fillStyle = "#4A342A"; ctx.fill(); outline(3);
+      ctx.fillStyle = "#6B4A38"; rr(x + 4, s.y + 4, s.w - 8, 14, 7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + s.w / 2, s.y + 11, s.w * .22, 4, 0, 0, 7); ctx.fillStyle = "#7A5540"; ctx.fill();
+      ctx.fillStyle = "#2E1F18";
       for (let i = 0; i < 2; i++) ctx.fillRect(x + 9 + i * 22, s.y + 30, 6, s.h - 42);
     }
   }
@@ -761,16 +771,16 @@
     ctx.save(); ctx.translate(x, y);
     // sparkle glow to mark it as a bonus pickup
     const twinkle = reduceMotion ? .3 : (Math.sin(tick * .1 + it.bob) * .15 + .3);
-    ctx.beginPath(); ctx.arc(0, -16, 24, 0, 7); ctx.fillStyle = "rgba(255,209,102," + twinkle + ")"; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -16, 24, 0, 7); ctx.fillStyle = "rgba(232,98,42," + twinkle + ")"; ctx.fill();
     // stalk
-    rr(-7, -16, 14, 16, 6); ctx.fillStyle = "#FFF1D2"; ctx.fill(); outline(3);
+    rr(-7, -16, 14, 16, 6); ctx.fillStyle = "#D8C4A8"; ctx.fill(); outline(3);
     // cap
     ctx.beginPath(); ctx.moveTo(-18, -15); ctx.quadraticCurveTo(-20, -40, 0, -40); ctx.quadraticCurveTo(20, -40, 18, -15); ctx.closePath();
-    ctx.fillStyle = "#E4572E"; ctx.fill(); outline(3);
+    ctx.fillStyle = "#C1451F"; ctx.fill(); outline(3);
     ctx.beginPath(); ctx.arc(-7, -28, 4.4, 0, 7); ctx.arc(6, -25, 3.2, 0, 7); ctx.arc(2, -34, 2.4, 0, 7);
-    ctx.fillStyle = "#FFF1D2"; ctx.fill();
+    ctx.fillStyle = "#FFC15E"; ctx.fill();
     // little star badge above it
-    ctx.fillStyle = "#FFD166";
+    ctx.fillStyle = "#E8B23A";
     ctx.save(); ctx.translate(14, -44); ctx.rotate(tick * (reduceMotion ? 0 : .03));
     star(0, 0, 4.5, 2, 5); ctx.fill(); outline(1.4);
     ctx.restore();
@@ -791,7 +801,7 @@
   function drawGoal() {
     const x = GOAL_X - cam.x;
     if (x < -80 || x > W + 120) return;
-    rr(x, GROUND_Y - 150, 9, 150, 4); ctx.fillStyle = "#8D6A45"; ctx.fill(); outline(3);
+    rr(x, GROUND_Y - 150, 9, 150, 4); ctx.fillStyle = "#3D2A1C"; ctx.fill(); outline(3);
     const wave = reduceMotion ? 0 : Math.sin(tick * .08) * 6;
     ctx.beginPath();
     ctx.moveTo(x + 8, GROUND_Y - 148);
@@ -799,8 +809,8 @@
     ctx.lineTo(x + 86, GROUND_Y - 102);
     ctx.quadraticCurveTo(x + 50, GROUND_Y - 96 + wave, x + 8, GROUND_Y - 104);
     ctx.closePath();
-    ctx.fillStyle = won ? "#7FD44A" : "#FFD166"; ctx.fill(); outline(3);
-    ctx.font = "700 15px Nunito, sans-serif"; ctx.fillStyle = "#2B3B21"; ctx.textAlign = "left";
+    ctx.fillStyle = won ? "#4CAF6D" : "#E8B23A"; ctx.fill(); outline(3);
+    ctx.font = "700 15px Nunito, sans-serif"; ctx.fillStyle = "#1C1516"; ctx.textAlign = "left";
     ctx.fillText(won ? "done!" : "finish", x + 20, GROUND_Y - 118);
   }
 
@@ -955,7 +965,7 @@
     for (const q of pops) {
       ctx.globalAlpha = Math.min(1, q.life / 24);
       ctx.font = '400 24px "Titan One", sans-serif';
-      ctx.fillStyle = "#FFF1D2"; ctx.strokeStyle = "#2B3B21"; ctx.lineWidth = 4;
+      ctx.fillStyle = "#FFF1D2"; ctx.strokeStyle = "#150F0E"; ctx.lineWidth = 4;
       ctx.strokeText(q.text, q.x - cam.x, q.y);
       ctx.fillText(q.text, q.x - cam.x, q.y);
       ctx.globalAlpha = 1;
@@ -967,11 +977,11 @@
     const a = Math.min(1, winTimer / 20);
     ctx.globalAlpha = a;
     const bw = 480, bh = 130, bx = (W - bw) / 2, by = 74;
-    rr(bx, by, bw, bh, 22); ctx.fillStyle = "#FFFCF2"; ctx.fill(); outline(4);
+    rr(bx, by, bw, bh, 22); ctx.fillStyle = "#241C1A"; ctx.fill(); outline(4);
     ctx.textAlign = "center";
-    ctx.font = '400 32px "Titan One", sans-serif'; ctx.fillStyle = "#21301A";
+    ctx.font = '400 32px "Titan One", sans-serif'; ctx.fillStyle = "#F1E4D3";
     ctx.fillText("All coins collected!", W / 2, by + 52);
-    ctx.font = '700 16px Nunito, sans-serif'; ctx.fillStyle = "#5A6B4E";
+    ctx.font = '700 16px Nunito, sans-serif'; ctx.fillStyle = "#BC9C86";
     ctx.fillText(bonusCount + " of " + TOTAL_BONUS + " bonus mushrooms found — press R or Start over.", W / 2, by + 86);
     ctx.globalAlpha = 1;
   }
@@ -982,7 +992,9 @@
     ctx.globalAlpha = a;
     ctx.textAlign = "left";
     ctx.font = '700 18px Nunito, sans-serif';
-    ctx.fillStyle = "#21301A";
+    ctx.strokeStyle = "#150F0E"; ctx.lineWidth = 4;
+    ctx.strokeText("Hold ▶ to run →  tap JUMP to hop the stones", 40, 210);
+    ctx.fillStyle = "#F1E4D3";
     ctx.fillText("Hold ▶ to run →  tap JUMP to hop the stones", 40, 210);
     ctx.globalAlpha = 1;
   }
