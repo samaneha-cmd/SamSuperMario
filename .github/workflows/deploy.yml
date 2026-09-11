@@ -18,11 +18,19 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Add server to known_hosts
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p 22 -H 65.109.208.86 >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy game file to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          ssh -p 22 p07@65.109.208.86 "mkdir -p /srv/www/p07/"
-          rsync -avz -e "ssh -p 22" dash-coin-meadow.html p07@65.109.208.86:/srv/www/p07/index.html
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
+          rsync -avz -e "ssh -p $SSH_PORT" dash-coin-meadow.html "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.html"
