@@ -23,7 +23,7 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy game file to server
+      - name: Deploy site to server
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -32,4 +32,5 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           sshpass -p "$SSH_PASSWORD" ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH'"
-          sshpass -p "$SSH_PASSWORD" rsync -avz -e "ssh -p $SSH_PORT" dash-coin-meadow.html "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/index.html"
+          sshpass -p "$SSH_PASSWORD" rsync -avz --exclude='.git' --exclude='.github' --exclude='.claude' \
+            -e "ssh -p $SSH_PORT" ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Sam</title>
+<meta name="description" content="Main menu for Super Sam — start a new run or resume your last one.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
+<style>
+  :root {
+    --page: #F4EBD6;
+    --ink: #21301A;
+    --line: #20241A;
+    --accent: #FF5FA2;
+    --accent-deep: #C22E70;
+    --display: "Titan One", "Trebuchet MS", system-ui, sans-serif;
+    --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page: #12160D; }
+  }
+  :root[data-theme="dark"] { --page: #12160D; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--body);
+    background: var(--page);
+    padding: 20px 16px;
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    aspect-ratio: 16 / 9;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 4px 0 var(--line), 0 20px 44px rgba(20, 15, 10, .35);
+    background-image: url("assets/menu-bg.jpg");
+    background-size: cover;
+    background-position: center;
+  }
+  .scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(20,10,20,.05) 0%, rgba(20,10,20,.12) 42%, rgba(20,10,20,.8) 100%);
+  }
+  .content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    padding: 6% 6% 6.5%;
+    gap: 1.6%;
+    text-align: center;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(1.9rem, 6.6vw, 3.4rem);
+    line-height: .98;
+    margin: 0;
+    color: #FFFCF2;
+    text-shadow: 0 3px 0 var(--line), 0 10px 22px rgba(0,0,0,.5);
+    letter-spacing: .01em;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  .tagline {
+    margin: 0 0 .5rem;
+    color: #FBF4E8;
+    font-weight: 800;
+    font-size: clamp(.78rem, 1.7vw, 1rem);
+    text-shadow: 0 2px 6px rgba(0,0,0,.6);
+  }
+  .buttons { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  button.menu-btn {
+    font-family: var(--display);
+    font-size: clamp(.9rem, 2.1vw, 1.2rem);
+    letter-spacing: .03em;
+    color: #FFFCF2;
+    background: var(--accent);
+    border: none;
+    border-radius: 14px;
+    padding: 15px 32px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 var(--accent-deep), 0 12px 22px rgba(0,0,0,.35);
+    transition: transform .06s ease, box-shadow .06s ease;
+  }
+  button.menu-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-deep); }
+  button.menu-btn.secondary {
+    background: rgba(255,252,242,.16);
+    border: 2px solid rgba(255,252,242,.8);
+    box-shadow: 0 5px 0 rgba(0,0,0,.35);
+  }
+  button.menu-btn.secondary:active { box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  button.menu-btn:disabled {
+    opacity: .42; cursor: not-allowed;
+    box-shadow: 0 5px 0 rgba(0,0,0,.25);
+  }
+  button.menu-btn:focus-visible { outline: 3px solid #FFF1D2; outline-offset: 3px; }
+  .hint { margin: 0; font-size: .76rem; color: #F1EEDC; opacity: .9; }
+
+  @media (max-width: 480px) {
+    .stage { aspect-ratio: 3 / 4; }
+    .content { justify-content: flex-end; padding-bottom: 9%; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="scrim"></div>
+    <div class="content">
+      <h1>Super <em>Sam</em></h1>
+      <p class="tagline">Dash's Coin Meadow</p>
+      <div class="buttons">
+        <button class="menu-btn" id="btnStart">Start</button>
+        <button class="menu-btn secondary" id="btnResume" disabled>Resume</button>
+      </div>
+      <p class="hint" id="resumeHint">No saved game yet — press Start to begin.</p>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    "use strict";
+    var SAVE_KEY = "ssm.dashCoinMeadow.save";
+
+    function hasSave() {
+      try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+    }
+
+    var resumeBtn = document.getElementById("btnResume");
+    var hint = document.getElementById("resumeHint");
+    if (hasSave()) {
+      resumeBtn.disabled = false;
+      hint.textContent = "Pick up right where you left off.";
+    }
+
+    document.getElementById("btnStart").addEventListener("click", function () {
+      try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+      location.href = "dash-coin-meadow.html";
+    });
+
+    resumeBtn.addEventListener("click", function () {
+      if (resumeBtn.disabled) return;
+      location.href = "dash-coin-meadow.html?resume=1";
+    });
+  })();
+</script>
+</body>
+</html>

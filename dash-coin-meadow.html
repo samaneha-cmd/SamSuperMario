@@ -140,14 +140,15 @@
     border-radius: 6px; padding: 1px 5px; color: var(--ink);
   }
   .mini { display: flex; gap: 8px; }
-  button.mini-btn {
+  .mini-btn {
     font-family: var(--body); font-weight: 900; font-size: .78rem;
     background: var(--panel); color: var(--ink);
     border: 3px solid var(--line); border-radius: 10px;
     padding: 7px 12px; cursor: pointer; box-shadow: 0 3px 0 var(--line);
+    text-decoration: none; display: inline-block; line-height: 1.1;
   }
-  button.mini-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
-  button.mini-btn:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  .mini-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
+  .mini-btn:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 
   @media (max-width: 520px) {
     button.key { height: 70px; min-width: 66px; }
@@ -215,6 +216,7 @@
     <div class="mini">
       <button class="mini-btn" id="btnSound" aria-pressed="true">Sound: on</button>
       <button class="mini-btn" id="btnReset">Start over</button>
+      <a class="mini-btn" id="btnMenu" href="index.html">Menu</a>
     </div>
   </footer>
 </div>
@@ -287,6 +289,26 @@
   const HILLS = [];
   for (let i = 0; i < 16; i++) HILLS.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
 
+  /* ---------------- save / resume ---------------- */
+  const SAVE_KEY = "ssm.dashCoinMeadow.save";
+  function saveProgress() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        coinCount, bonusCount, x: p.x, y: p.y, ts: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function clearProgress() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  }
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  const wantResume = new URLSearchParams(location.search).get("resume") === "1";
+
   /* ---------------- state ---------------- */
   let p, items, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer;
 
@@ -339,7 +361,7 @@
     if (k === "arrowleft" || k === "a") { setKey("left", true); e.preventDefault(); }
     else if (k === "arrowright" || k === "d") { setKey("right", true); e.preventDefault(); }
     else if (k === " " || k === "arrowup" || k === "w") { setKey("jump", true); audioWake(); e.preventDefault(); }
-    else if (k === "r") reset();
+    else if (k === "r") { clearProgress(); reset(); }
   });
   window.addEventListener("keyup", e => {
     const k = e.key.toLowerCase();
@@ -361,7 +383,7 @@
   bindPad(document.getElementById("btnRight"), "right");
   bindPad(document.getElementById("btnJump"), "jump");
 
-  document.getElementById("btnReset").addEventListener("click", () => reset());
+  document.getElementById("btnReset").addEventListener("click", () => { clearProgress(); reset(); });
 
   /* ---------------- sound ---------------- */
   let ac = null, soundOn = true;
@@ -475,6 +497,7 @@
         }
         updateHud();
         if (coinCount >= TOTAL_COINS && !won) { won = true; winTimer = 0; sfxWin(); for (let k = 0; k < 5; k++) burst(p.x + p.w / 2, p.y, "coin"); }
+        if (won) clearProgress(); else saveProgress();
       }
     }
 
@@ -723,6 +746,17 @@
     ctx.fillText(won ? "done!" : "finish", x + 20, GROUND_Y - 118);
   }
 
+  const HERO_SKIN = "#F2C9A1";
+  const HERO_HAIR = "#5B3A29";
+  const HERO_SHIRT = "#FF6FA5";
+  const HERO_SHIRT_LIGHT = "#FF8FBE";
+  const HERO_OVERALLS = "#2BADA0";
+  const HERO_OVERALLS_DEEP = "#1E8578";
+  const HERO_CAP = "#FF6FA5";
+  const HERO_CAP_BRIM = "#E14C8D";
+  const HERO_GLOVE = "#FFFCF2";
+  const HERO_SHOE = "#6B4A2A";
+
   function drawHero() {
     const cx = p.x + p.w / 2 - cam.x;
     const by = p.y + p.h;
@@ -743,46 +777,85 @@
     const legSwing = p.onGround ? Math.sin(p.phase) * bw * .24 : bw * .12;
     const armSwing = p.onGround ? Math.sin(p.phase + Math.PI) : -0.5;
 
-    // legs
-    ctx.fillStyle = "#33456B";
+    // legs (overalls)
+    ctx.fillStyle = HERO_OVERALLS;
     rr(-bw * .26 + legSwing * .5, -bh * .3, bw * .2, bh * .3, 6); ctx.fill(); outline(2.5);
     rr(bw * .06 - legSwing * .5, -bh * .3, bw * .2, bh * .3, 6); ctx.fill(); outline(2.5);
     // shoes
-    ctx.fillStyle = "#6B4A2A";
+    ctx.fillStyle = HERO_SHOE;
     rr(-bw * .3 + legSwing * .5, -bh * .06, bw * .26, bh * .09, 5); ctx.fill(); outline(2);
     rr(bw * .04 - legSwing * .5, -bh * .06, bw * .26, bh * .09, 5); ctx.fill(); outline(2);
 
     // back arm (behind torso)
     ctx.save(); ctx.translate(bw * .3, -bh * .78); ctx.rotate(armSwing * .5);
-    rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = "#2E6BA8"; ctx.fill(); outline(2.2);
-    ctx.beginPath(); ctx.arc(0, bh * .3, bw * .08, 0, 7); ctx.fillStyle = "#F2C9A1"; ctx.fill(); outline(2);
+    rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(2.2);
+    ctx.beginPath(); ctx.arc(0, bh * .3, bw * .085, 0, 7); ctx.fillStyle = HERO_GLOVE; ctx.fill(); outline(2);
     ctx.restore();
 
     // torso (shirt)
-    rr(-bw * .34, -bh * .86, bw * .68, bh * .48, 11); ctx.fillStyle = "#3B7EC4"; ctx.fill(); outline(3);
-    ctx.fillStyle = "#5C9BDC"; rr(-bw * .22, -bh * .8, bw * .3, bh * .12, 6); ctx.fill();
+    rr(-bw * .34, -bh * .86, bw * .68, bh * .48, 11); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(3);
+    ctx.fillStyle = HERO_SHIRT_LIGHT; rr(-bw * .22, -bh * .8, bw * .3, bh * .12, 6); ctx.fill();
+
+    // overalls bib + straps
+    ctx.fillStyle = HERO_OVERALLS;
+    rr(-bw * .18, -bh * .62, bw * .36, bh * .28, 6); ctx.fill(); outline(2.4);
+    ctx.beginPath();
+    ctx.moveTo(-bw * .16, -bh * .62); ctx.lineTo(-bw * .26, -bh * .84); ctx.lineTo(-bw * .13, -bh * .84); ctx.lineTo(-bw * .06, -bh * .62);
+    ctx.closePath(); ctx.fill(); outline(2);
+    ctx.beginPath();
+    ctx.moveTo(bw * .16, -bh * .62); ctx.lineTo(bw * .26, -bh * .84); ctx.lineTo(bw * .13, -bh * .84); ctx.lineTo(bw * .06, -bh * .62);
+    ctx.closePath(); ctx.fill(); outline(2);
+    ctx.fillStyle = "#FFE9A6";
+    ctx.beginPath(); ctx.arc(-bw * .12, -bh * .63, bw * .026, 0, 7); ctx.fill(); outline(1.4);
+    ctx.beginPath(); ctx.arc(bw * .12, -bh * .63, bw * .026, 0, 7); ctx.fill(); outline(1.4);
     // belt
-    ctx.fillStyle = "#2B3B21"; ctx.fillRect(-bw * .34, -bh * .4, bw * .68, bh * .045);
+    ctx.fillStyle = HERO_OVERALLS_DEEP; ctx.fillRect(-bw * .34, -bh * .4, bw * .68, bh * .045);
 
     // front arm
     ctx.save(); ctx.translate(-bw * .3, -bh * .78); ctx.rotate(-armSwing * .5);
-    rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = "#3B7EC4"; ctx.fill(); outline(2.2);
-    ctx.beginPath(); ctx.arc(0, bh * .3, bw * .08, 0, 7); ctx.fillStyle = "#F2C9A1"; ctx.fill(); outline(2);
+    rr(-bw * .07, 0, bw * .14, bh * .3, 7); ctx.fillStyle = HERO_SHIRT; ctx.fill(); outline(2.2);
+    ctx.beginPath(); ctx.arc(0, bh * .3, bw * .085, 0, 7); ctx.fillStyle = HERO_GLOVE; ctx.fill(); outline(2);
     ctx.restore();
 
     // head
     const headR = bw * .34;
     const headY = -bh * .86 - headR * .68;
-    ctx.beginPath(); ctx.arc(0, headY, headR, 0, 7); ctx.fillStyle = "#F2C9A1"; ctx.fill(); outline(3);
+    ctx.beginPath(); ctx.arc(0, headY, headR, 0, 7); ctx.fillStyle = HERO_SKIN; ctx.fill(); outline(3);
     // ear
-    ctx.beginPath(); ctx.arc(p.face * headR * .92, headY + headR * .1, headR * .18, 0, 7); ctx.fillStyle = "#F2C9A1"; ctx.fill(); outline(1.6);
+    ctx.beginPath(); ctx.arc(p.face * headR * .92, headY + headR * .1, headR * .18, 0, 7); ctx.fillStyle = HERO_SKIN; ctx.fill(); outline(1.6);
 
-    // hair
+    // ponytail (swings behind, opposite the facing side)
+    const ptSwing = reduceMotion ? 0 : Math.sin(p.phase * .6) * headR * .2;
+    const pxBase = -p.face * headR * .78;
+    const pyBase = headY - headR * .05;
     ctx.beginPath();
-    ctx.arc(0, headY - headR * .05, headR * 1.04, Math.PI * 1.02, Math.PI * 1.98);
-    ctx.fillStyle = "#5B3A29"; ctx.fill(); outline(2.4);
-    ctx.beginPath(); ctx.arc(-headR * .5, headY - headR * .55, headR * .22, 0, 7); ctx.fillStyle = "#5B3A29"; ctx.fill();
-    ctx.beginPath(); ctx.arc(headR * .5, headY - headR * .55, headR * .22, 0, 7); ctx.fill();
+    ctx.moveTo(pxBase, pyBase - headR * .3);
+    ctx.quadraticCurveTo(pxBase - p.face * headR * .95 + ptSwing, pyBase + headR * .5,
+                          pxBase - p.face * headR * .3 + ptSwing * .6, pyBase + headR * 1.15);
+    ctx.quadraticCurveTo(pxBase - p.face * headR * .02, pyBase + headR * .85,
+                          pxBase + p.face * headR * .1, pyBase);
+    ctx.closePath();
+    ctx.fillStyle = HERO_HAIR; ctx.fill(); outline(2.2);
+
+    // hair fringe under the cap
+    ctx.beginPath();
+    ctx.arc(0, headY - headR * .08, headR * 1.0, Math.PI * .1, Math.PI * .9);
+    ctx.fillStyle = HERO_HAIR; ctx.fill();
+
+    // cap
+    ctx.beginPath();
+    ctx.arc(0, headY - headR * .18, headR * 1.06, Math.PI * .98, Math.PI * .02, true);
+    ctx.fillStyle = HERO_CAP; ctx.fill(); outline(2.6);
+    ctx.save();
+    ctx.translate(p.face * headR * .78, headY - headR * .12);
+    ctx.rotate(p.face * -.15);
+    ctx.beginPath(); ctx.ellipse(0, 0, headR * .46, headR * .2, 0, 0, 7);
+    ctx.fillStyle = HERO_CAP_BRIM; ctx.fill(); outline(2);
+    ctx.restore();
+    ctx.fillStyle = "#FFFCF2";
+    ctx.save(); ctx.translate(0, headY - headR * .42);
+    star(0, 0, headR * .22, headR * .1, 5); ctx.fill(); outline(1.4);
+    ctx.restore();
 
     // face
     const eo = p.face * bw * .07;
@@ -794,13 +867,17 @@
       ctx.fillStyle = "#22331F";
       ctx.beginPath(); ctx.arc(-headR * .28 + eo * 1.4, headY + headR * .05, headR * .1, 0, 7); ctx.fill();
       ctx.beginPath(); ctx.arc(headR * .44 + eo * 1.4, headY + headR * .05, headR * .1, 0, 7); ctx.fill();
+      // eyelashes
+      ctx.strokeStyle = "#22331F"; ctx.lineWidth = 1.6; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(-headR * .5 + eo, headY - headR * .04); ctx.lineTo(-headR * .58 + eo, headY - headR * .14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(headR * .56 + eo, headY - headR * .04); ctx.lineTo(headR * .64 + eo, headY - headR * .14); ctx.stroke();
     } else {
       ctx.strokeStyle = "#22331F"; ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.moveTo(-headR * .52 + eo, headY + headR * .05); ctx.lineTo(-headR * .16 + eo, headY + headR * .05);
       ctx.moveTo(headR * .2 + eo, headY + headR * .05); ctx.lineTo(headR * .56 + eo, headY + headR * .05); ctx.stroke();
     }
     // cheeks
-    ctx.fillStyle = "rgba(228,87,46,.32)";
+    ctx.fillStyle = "rgba(255,111,165,.35)";
     ctx.beginPath(); ctx.ellipse(-headR * .58 + eo, headY + headR * .32, headR * .16, headR * .1, 0, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.ellipse(headR * .62 + eo, headY + headR * .32, headR * .16, headR * .1, 0, 0, 7); ctx.fill();
     // mouth
@@ -882,11 +959,23 @@
     requestAnimationFrame(frame);
   }
 
+  function hasProgress() { return coinCount > 0 || bonusCount > 0; }
+  window.addEventListener("beforeunload", () => { if (!won && hasProgress()) saveProgress(); });
+  window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && !won && hasProgress()) saveProgress();
+  });
+
   try {
     window.claude?.hot?.snapshot?.(() => ({ coinCount, bonusCount, x: p.x, y: p.y }));
   } catch (e) {}
-  if (window.claude?.hot?.ready) window.claude.hot.ready(start);
-  else start(window.claude?.hot?.data);
+  if (window.claude?.hot?.ready) {
+    window.claude.hot.ready(start);
+  } else if (window.claude?.hot?.data) {
+    start(window.claude.hot.data);
+  } else {
+    if (!wantResume) clearProgress();
+    start(wantResume ? loadProgress() : null);
+  }
 })();
 </script>
 </body>
