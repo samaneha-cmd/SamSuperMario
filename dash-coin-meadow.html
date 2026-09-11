@@ -86,6 +86,13 @@
     line-height: 0;
   }
   canvas { width: 100%; height: auto; display: block; touch-action: none; }
+  .cobweb {
+    position: absolute; top: 0; width: 68px; height: 68px;
+    color: rgba(241, 228, 211, .5);
+    pointer-events: none; z-index: 2;
+  }
+  .cobweb-left { left: 0; }
+  .cobweb-right { right: 0; transform: scaleX(1); }
 
   .pads { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .dpad { display: flex; gap: 10px; }
@@ -178,7 +185,15 @@
   </header>
 
   <div class="screen">
-    <canvas id="game" width="900" height="500" aria-label="Dash runs through a sunny meadow collecting coins and bonus mushrooms"></canvas>
+    <svg class="cobweb cobweb-left" viewBox="0 0 80 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M0 0 L80 80 M0 30 Q30 10 60 0 M0 55 Q35 35 80 30 M30 0 Q10 30 0 60"/>
+      <path d="M4 4 Q20 14 30 30 Q14 20 4 4 M4 4 Q22 8 44 6 Q20 18 4 4 M4 4 Q8 22 6 44 Q18 20 4 4"/>
+    </g></svg>
+    <svg class="cobweb cobweb-right" viewBox="0 0 80 80" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4">
+      <path d="M80 0 L0 80 M80 30 Q50 10 20 0 M80 55 Q45 35 0 30 M50 0 Q70 30 80 60"/>
+      <path d="M76 4 Q60 14 50 30 Q66 20 76 4 M76 4 Q58 8 36 6 Q60 18 76 4 M76 4 Q72 22 74 44 Q62 20 76 4"/>
+    </g></svg>
+    <canvas id="game" width="900" height="500" aria-label="Sam runs across the ashlands toward the shadow tower, collecting star-coins and embermushrooms"></canvas>
   </div>
 
   <div class="pads">
@@ -267,12 +282,16 @@
     { x: 2480, y: 70, s: 1.1 }, { x: 2900, y: 116, s: .8 }, { x: 3320, y: 84, s: .95 }
   ];
   const BUSHES = [];
-  for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 3 });
+  for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 4 });
   const HILLS = [];
   for (let i = 0; i < 16; i++) HILLS.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
   const RAVENS = [];
   for (let i = 0; i < 11; i++) {
     RAVENS.push({ x: 180 + i * 330 + (i * 71 % 90), y: 70 + (i * 53 % 90), s: .7 + (i * 41 % 60) / 100, seed: i * 1.7 });
+  }
+  const BATS = [];
+  for (let i = 0; i < 14; i++) {
+    BATS.push({ x: 90 + i * 260 + (i * 83 % 70), y: 160 + (i * 61 % 130), s: .55 + (i * 37 % 50) / 100, seed: i * 2.3 });
   }
   const TOWER_X = GOAL_X + 60;
 
@@ -604,6 +623,14 @@
       if (wx < -60 || wx > W + 60) continue;
       drawRaven(wx, d.y + (reduceMotion ? 0 : Math.sin(tick * .05 + d.seed) * 10), d.s, d.seed);
     }
+
+    // bats, closer and jitterier than the ravens
+    for (const b of BATS) {
+      const x = b.x - cam.x * .7 + (reduceMotion ? 0 : Math.sin(tick * .03 + b.seed) * 26);
+      const wx = ((x % (WORLD * .95)) + WORLD * .95) % (WORLD * .95);
+      if (wx < -40 || wx > W + 40) continue;
+      drawBat(wx, b.y + (reduceMotion ? 0 : Math.sin(tick * .08 + b.seed) * 14), b.s, b.seed);
+    }
   }
   function drawTower() {
     const tx = 700 - cam.x * .08;
@@ -645,6 +672,28 @@
     ctx.moveTo(-14, 4 - flap * 6); ctx.quadraticCurveTo(-6, -4, 0, 1);
     ctx.quadraticCurveTo(6, -4, 14, 4 - flap * 6);
     ctx.stroke();
+    ctx.restore();
+  }
+  function drawBat(x, y, s, seed) {
+    const flap = reduceMotion ? .5 : Math.abs(Math.sin(tick * .35 + seed));
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = "#0A0706";
+    // left wing: scalloped bat silhouette, angle rises/falls with the flap
+    ctx.save(); ctx.rotate(-flap * .7);
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(-9, -8); ctx.lineTo(-8, -3); ctx.lineTo(-16, -9);
+    ctx.lineTo(-14, -2); ctx.lineTo(-20, -1); ctx.lineTo(-6, 4); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // right wing (mirrored)
+    ctx.save(); ctx.scale(-1, 1); ctx.rotate(-flap * .7);
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(-9, -8); ctx.lineTo(-8, -3); ctx.lineTo(-16, -9);
+    ctx.lineTo(-14, -2); ctx.lineTo(-20, -1); ctx.lineTo(-6, 4); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // small body
+    ctx.beginPath(); ctx.ellipse(0, 0, 3, 2.4, 0, 0, 7); ctx.fill();
     ctx.restore();
   }
 
@@ -706,11 +755,28 @@
         ctx.strokeStyle = "#1C1516"; ctx.lineWidth = 5; ctx.lineCap = "round";
         ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -34); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(-16, -34); ctx.moveTo(0, -26); ctx.lineTo(15, -40); ctx.moveTo(0, -34); ctx.lineTo(-10, -48); ctx.stroke();
-      } else {
+      } else if (b.kind === 2) {
         // small ember pit
         ctx.beginPath(); ctx.ellipse(0, -3, 13, 6, 0, 0, 7); ctx.fillStyle = "#241A1B"; ctx.fill(); outline(2);
         const glow = reduceMotion ? .8 : .6 + Math.sin(tick * .1 + b.x) * .3;
         ctx.beginPath(); ctx.ellipse(0, -3, 7 * glow, 3 * glow, 0, 0, 7); ctx.fillStyle = "#E8622A"; ctx.fill();
+      } else {
+        // jack-o'-lantern
+        const flicker = reduceMotion ? .85 : .7 + Math.sin(tick * .15 + b.x) * .25;
+        ctx.beginPath(); ctx.ellipse(0, -20, 22 * flicker, 20 * flicker, 0, 0, 7);
+        ctx.fillStyle = "rgba(255,158,60," + (.3 * flicker) + ")"; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, -17, 15, 13, 0, 0, 7);
+        ctx.fillStyle = "#D9721E"; ctx.fill(); outline(2.6);
+        ctx.strokeStyle = "#8A4610"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-8, -27); ctx.lineTo(-8, -7); ctx.moveTo(8, -27); ctx.lineTo(8, -7); ctx.stroke();
+        ctx.fillStyle = "#4C260C"; ctx.fillRect(-2, -33, 4, 7);
+        // glowing carved face
+        ctx.fillStyle = "#FFC15E";
+        ctx.beginPath(); ctx.moveTo(-8, -20); ctx.lineTo(-3, -14); ctx.lineTo(-8, -14); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(8, -20); ctx.lineTo(3, -14); ctx.lineTo(8, -14); ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-7, -8); ctx.lineTo(-4, -10); ctx.lineTo(-2, -8); ctx.lineTo(0, -10); ctx.lineTo(2, -8); ctx.lineTo(4, -10); ctx.lineTo(7, -8);
+        ctx.lineTo(7, -6); ctx.lineTo(-7, -6); ctx.closePath(); ctx.fill();
       }
       ctx.restore();
     }
@@ -824,8 +890,40 @@
   const HERO_CAP_BRIM = "#E14C8D";
   const HERO_GLOVE = "#FFFCF2";
   const HERO_SHOE = "#6B4A2A";
+  const HERO_IMG_ASPECT = 748 / 1096;
+  const heroImg = new Image();
+  heroImg.src = "assets/hero.png";
 
   function drawHero() {
+    if (heroImg.complete && heroImg.naturalWidth) {
+      drawHeroSprite();
+    } else {
+      drawHeroFallback();
+    }
+  }
+
+  function drawHeroSprite() {
+    const cx = p.x + p.w / 2 - cam.x;
+    const by = p.y + p.h;
+    const sq = p.squash;
+    const sy = 1 + sq * -.14 + (sq < 0 ? .1 : 0);
+    const sx = 1 + sq * .1 + (sq < 0 ? -.06 : 0);
+
+    // shadow
+    ctx.beginPath();
+    ctx.ellipse(cx, GROUND_Y + 6, p.w * .5, 6, 0, 0, 7);
+    ctx.fillStyle = "rgba(10,7,6,.35)"; ctx.fill();
+
+    const drawH = p.h * 2.5;
+    const drawW = drawH * HERO_IMG_ASPECT;
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(sx * p.face, sy);
+    ctx.drawImage(heroImg, -drawW * .42, -drawH * .92, drawW, drawH);
+    ctx.restore();
+  }
+
+  function drawHeroFallback() {
     const cx = p.x + p.w / 2 - cam.x;
     const by = p.y + p.h;
     const sq = p.squash;
