@@ -8,35 +8,35 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:ital,wght@0,400;0,700;0,900&display=swap">
 <style>
   :root {
-    --page: #F4EBD6;
-    --panel: #FFFCF2;
-    --ink: #21301A;
-    --ink-soft: #5A6B4E;
-    --line: #2B3B21;
-    --accent: #E4572E;
-    --accent-deep: #B93C1A;
-    --leaf: #4E9C33;
+    --page: #FCEAF6;
+    --panel: #FFFBFE;
+    --ink: #3A1F35;
+    --ink-soft: #8A6B84;
+    --line: #341530;
+    --accent: #FF6FA5;
+    --accent-deep: #C22E70;
+    --leaf: #33B8A0;
     --gold: #FFD166;
-    --shadow: rgba(43, 59, 33, .22);
+    --shadow: rgba(52, 21, 48, .22);
     --display: "Titan One", "Trebuchet MS", system-ui, sans-serif;
     --body: "Nunito", "Segoe UI", system-ui, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --page: #162015;
-      --panel: #1F2B1C;
-      --ink: #F1EEDC;
-      --ink-soft: #A9BC9C;
-      --line: #0C130A;
+      --page: #1E1425;
+      --panel: #2B1E33;
+      --ink: #F6E9F2;
+      --ink-soft: #C3A6C0;
+      --line: #120B16;
       --shadow: rgba(0, 0, 0, .45);
     }
   }
   :root[data-theme="dark"] {
-    --page: #162015;
-    --panel: #1F2B1C;
-    --ink: #F1EEDC;
-    --ink-soft: #A9BC9C;
-    --line: #0C130A;
+    --page: #1E1425;
+    --panel: #2B1E33;
+    --ink: #F6E9F2;
+    --ink-soft: #C3A6C0;
+    --line: #120B16;
     --shadow: rgba(0, 0, 0, .45);
   }
 
@@ -99,7 +99,7 @@
     border: 4px solid var(--line);
     border-radius: 20px;
     overflow: hidden;
-    background: #8FD3EC;
+    background: #E3B3F2;
     box-shadow: 0 8px 0 var(--line), 0 18px 30px var(--shadow);
     line-height: 0;
   }
@@ -285,9 +285,18 @@
     { x: 2480, y: 70, s: 1.1 }, { x: 2900, y: 116, s: .8 }, { x: 3320, y: 84, s: .95 }
   ];
   const BUSHES = [];
-  for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100 });
+  for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 3 });
   const HILLS = [];
   for (let i = 0; i < 16; i++) HILLS.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
+  const DRAGONS = [
+    { x: 260, y: 130, s: .8, seed: 0 },
+    { x: 980, y: 90, s: 1.05, seed: 1.4 },
+    { x: 1760, y: 150, s: .9, seed: 2.7 },
+    { x: 2520, y: 100, s: 1.1, seed: 4.1 },
+    { x: 3180, y: 140, s: .85, seed: 5.5 }
+  ];
+  const dragonImg = new Image();
+  dragonImg.src = "assets/dragon.png";
 
   /* ---------------- save / resume ---------------- */
   const SAVE_KEY = "ssm.dashCoinMeadow.save";
@@ -562,38 +571,38 @@
 
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, GROUND_Y + 20);
-    g.addColorStop(0, "#4FB3DE");
-    g.addColorStop(.55, "#93D8F0");
-    g.addColorStop(1, "#D6F0E4");
+    g.addColorStop(0, "#F6B9E0");
+    g.addColorStop(.45, "#E3B3F2");
+    g.addColorStop(1, "#FBE3E0");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // sun
+    // candy sun
     const sx = 770, sy = 92, rays = reduceMotion ? 0 : tick * .0035;
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate(rays);
-    ctx.fillStyle = "rgba(255, 226, 130, .35)";
+    ctx.fillStyle = "rgba(255, 214, 245, .4)";
     for (let i = 0; i < 12; i++) {
       ctx.rotate(Math.PI / 6);
       ctx.beginPath(); ctx.moveTo(0, -46); ctx.lineTo(9, -96); ctx.lineTo(-9, -96); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
-    ctx.beginPath(); ctx.arc(sx, sy, 42, 0, 7); ctx.fillStyle = "#FFDE6B"; ctx.fill(); outline(3);
-    ctx.fillStyle = "#FFF0AE"; ctx.beginPath(); ctx.arc(sx - 12, sy - 12, 13, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, sy, 42, 0, 7); ctx.fillStyle = "#FFE180"; ctx.fill(); outline(3);
+    ctx.fillStyle = "#FFF2B8"; ctx.beginPath(); ctx.arc(sx - 12, sy - 12, 13, 0, 7); ctx.fill();
 
     // hills
     for (const hl of HILLS) {
       const x = hl.x - cam.x * .35;
       if (x < -400 || x > W + 400) continue;
       ctx.beginPath(); ctx.arc(x, GROUND_Y + 20, hl.r, Math.PI, 0); ctx.closePath();
-      ctx.fillStyle = "#6FBF6A"; ctx.fill();
+      ctx.fillStyle = "#C79BE8"; ctx.fill();
     }
     for (const hl of HILLS) {
       const x = hl.x * .8 + 140 - cam.x * .55;
       if (x < -360 || x > W + 360) continue;
       ctx.beginPath(); ctx.arc(x, GROUND_Y + 30, hl.r * .8, Math.PI, 0); ctx.closePath();
-      ctx.fillStyle = "#58AB55"; ctx.fill();
+      ctx.fillStyle = "#B37FDC"; ctx.fill();
     }
 
     // clouds
@@ -602,6 +611,14 @@
       const wx = ((x % (WORLD * .6)) + WORLD * .6) % (WORLD * .6);
       if (wx < -200 || wx > W + 200) continue;
       cloud(wx, c.y, c.s);
+    }
+
+    // dragons
+    for (const d of DRAGONS) {
+      const x = d.x - cam.x * .5 + (reduceMotion ? 0 : Math.sin(tick * .01 + d.seed) * 18);
+      const wx = ((x % (WORLD * .9)) + WORLD * .9) % (WORLD * .9);
+      if (wx < -140 || wx > W + 140) continue;
+      drawDragon(wx, d.y + (reduceMotion ? 0 : Math.sin(tick * .05 + d.seed) * 10), d.s);
     }
   }
   function cloud(x, y, s) {
@@ -613,22 +630,42 @@
     ctx.beginPath(); ctx.arc(-4, -2, 28, 0, 7); ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill();
     ctx.restore();
   }
+  function drawDragon(x, y, s) {
+    if (dragonImg && dragonImg.complete && dragonImg.naturalWidth) {
+      const flap = reduceMotion ? 1 : .82 + Math.abs(Math.sin(tick * .12 + x)) * .18;
+      const w = 92 * s, h = 92 * s;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, flap);
+      ctx.drawImage(dragonImg, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      return;
+    }
+    // fallback vector dragon while the sprite loads
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = "#FF7FC1";
+    ctx.beginPath(); ctx.ellipse(0, 0, 26, 16, 0, 0, 7); ctx.fill(); outline(2.4);
+    ctx.beginPath(); ctx.ellipse(20, -4, 11, 9, 0, 0, 7); ctx.fill(); outline(2);
+    ctx.fillStyle = "#FFD3EC";
+    ctx.beginPath(); ctx.ellipse(-6, -18, 16, 9, .5, 0, 7); ctx.fill(); outline(2);
+    ctx.restore();
+  }
 
   function drawGround() {
-    ctx.fillStyle = "#8C5A38";
+    ctx.fillStyle = "#C98FB0";
     ctx.fillRect(0, GROUND_Y + 22, W, H - GROUND_Y);
-    ctx.fillStyle = "#7A4A2C";
+    ctx.fillStyle = "#B5789C";
     for (let i = 0; i < 60; i++) {
       const gx = (i * 70 - cam.x * 1) % (W + 140);
       const x = ((gx % (W + 140)) + W + 140) % (W + 140) - 70;
       ctx.fillRect(x, GROUND_Y + 46 + (i % 3) * 18, 26, 9);
     }
-    ctx.fillStyle = "#5FB33C";
+    ctx.fillStyle = "#6FD4C4";
     ctx.fillRect(0, GROUND_Y, W, 24);
-    ctx.fillStyle = "#4C9A30";
+    ctx.fillStyle = "#4FB8A6";
     ctx.fillRect(0, GROUND_Y + 18, W, 6);
-    // grass blades
-    ctx.fillStyle = "#7FD44A";
+    // candy-grass blades
+    ctx.fillStyle = "#8FE6D6";
     for (let i = 0; i < 90; i++) {
       const bx = i * 22 - (cam.x % 22) - 22;
       const hh = 6 + (i * 37 % 7);
@@ -637,13 +674,34 @@
     ctx.strokeStyle = "#2B3B21"; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
 
-    // bushes in front of the dirt line
+    // lollipops & candy-cane trees in front of the ground line
     for (const b of BUSHES) {
       const x = b.x - cam.x * .92;
       if (x < -120 || x > W + 120) continue;
       ctx.save(); ctx.translate(x, GROUND_Y + 4); ctx.scale(b.s, b.s);
-      ctx.beginPath(); ctx.arc(-18, 0, 16, Math.PI, 0); ctx.arc(4, -4, 20, Math.PI, 0); ctx.arc(26, 0, 15, Math.PI, 0); ctx.closePath();
-      ctx.fillStyle = "rgba(56,132,52,.55)"; ctx.fill();
+      if (b.kind === 0) {
+        // lollipop
+        ctx.strokeStyle = "#F1EEDC"; ctx.lineWidth = 5; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, -42, 16, 0, 7);
+        ctx.fillStyle = "#FF6FA5"; ctx.fill(); outline(2.4);
+        ctx.strokeStyle = "#FFD1E8"; ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(0, -42, 10, .3, 4.2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, -42, 5, .6, 3.6); ctx.stroke();
+      } else if (b.kind === 1) {
+        // candy-cane striped tree trunk with a puffy top
+        ctx.fillStyle = "#F1EEDC"; ctx.fillRect(-4, -34, 8, 34); outline(2);
+        ctx.strokeStyle = "#FF6FA5"; ctx.lineWidth = 3;
+        for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-4, -6 - k * 8); ctx.lineTo(4, -12 - k * 8); ctx.stroke(); }
+        ctx.beginPath();
+        ctx.arc(-16, -40, 15, Math.PI, 0); ctx.arc(2, -50, 19, Math.PI, 0); ctx.arc(20, -40, 14, Math.PI, 0);
+        ctx.fillStyle = "#FFC2E2"; ctx.fill(); outline(2.4);
+      } else {
+        // small swirl candy
+        ctx.beginPath(); ctx.arc(0, -14, 13, 0, 7); ctx.fillStyle = "#B7A6F2"; ctx.fill(); outline(2.2);
+        ctx.strokeStyle = "#F1EEDC"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, -14, 8, .3, 4.6); ctx.stroke();
+      }
       ctx.restore();
     }
   }
@@ -663,7 +721,7 @@
     } else if (s.kind === "plank") {
       rr(x, s.y, s.w, s.h, 9); ctx.fillStyle = "#C98A4B"; ctx.fill(); outline(3);
       ctx.fillStyle = "#E0A868"; rr(x + 6, s.y + 5, s.w - 12, 7, 4); ctx.fill();
-      ctx.fillStyle = "#7FD44A";
+      ctx.fillStyle = "#8FE6D6";
       for (let i = 0; i < 3; i++) {
         const gx = x + 14 + i * (s.w - 28) / 2;
         ctx.beginPath(); ctx.moveTo(gx, s.y + 1); ctx.lineTo(gx + 5, s.y - 9); ctx.lineTo(gx + 10, s.y + 1); ctx.closePath(); ctx.fill();
