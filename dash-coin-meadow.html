@@ -124,14 +124,6 @@
   }
   .win-stats { margin: 0; font-weight: 800; font-size: .92rem; color: var(--ink); }
   .win-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-  .win-note { margin: 0; font-size: .76rem; color: var(--ink-soft); min-height: 1.1em; }
-  #winName {
-    font-family: var(--body); font-size: .85rem;
-    background: var(--page); color: var(--ink);
-    border: 2px solid var(--line); border-radius: 8px;
-    padding: 7px 10px; min-width: 0; flex: 1;
-  }
-  #winName:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 
   .pads { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .dpad { display: flex; gap: 10px; }
@@ -261,11 +253,6 @@
         <p class="win-title">You reached the tower!</p>
         <p class="win-stats" id="winStats">0 / 8 coins &middot; 0 / 4 bonus &middot; 0.0s</p>
         <div class="win-row">
-          <input type="text" id="winName" maxlength="24" placeholder="Your name" aria-label="Your name, for the leaderboard">
-          <button class="mini-btn" id="btnSubmitScore">Submit score</button>
-        </div>
-        <p class="win-note" id="winNote">&nbsp;</p>
-        <div class="win-row">
           <button class="menu-btn" id="btnPlayAgain">Play again</button>
           <a class="menu-btn secondary" href="index.html">Menu</a>
         </div>
@@ -388,17 +375,14 @@
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     if (window.SamCloud) window.SamCloud.clearProgress();
   }
-  let lastRunStats = null;
   function submitRunScore(winTick) {
-    lastRunStats = { coins: coinCount, bonus: bonusCount, timeMs: Math.round(winTick * (1000 / 60)) };
-    setTimeout(showWinOverlay, 550);
+    const stats = { coins: coinCount, bonus: bonusCount, timeMs: Math.round(winTick * (1000 / 60)) };
+    setTimeout(() => showWinOverlay(stats), 550);
   }
-  function showWinOverlay() {
+  function showWinOverlay(stats) {
     const overlay = document.getElementById("winOverlay");
-    const stats = lastRunStats || { coins: coinCount, bonus: bonusCount, timeMs: Math.round(tick * (1000 / 60)) };
     document.getElementById("winStats").textContent =
       stats.coins + " / " + TOTAL_COINS + " coins · " + stats.bonus + " / " + TOTAL_BONUS + " bonus · " + (stats.timeMs / 1000).toFixed(1) + "s";
-    document.getElementById("winNote").textContent = window.SamCloud ? "" : "Leaderboard is offline right now.";
     overlay.hidden = false;
   }
   function hideWinOverlay() { document.getElementById("winOverlay").hidden = true; }
@@ -491,17 +475,6 @@
     clearProgress();
     reset();
   });
-  document.getElementById("btnSubmitScore").addEventListener("click", () => {
-    const nameInput = document.getElementById("winName");
-    const note = document.getElementById("winNote");
-    const name = nameInput.value.trim();
-    if (!name) { note.textContent = "Enter a name first."; return; }
-    if (!window.SamCloud || !lastRunStats) { note.textContent = "Leaderboard is offline right now."; return; }
-    note.textContent = "Submitting…";
-    Promise.resolve(window.SamCloud.submitScore({ name, coins: lastRunStats.coins, bonus: lastRunStats.bonus, timeMs: lastRunStats.timeMs }))
-      .then(ok => { note.textContent = ok ? "Saved to the leaderboard!" : "Couldn't reach the leaderboard."; });
-  });
-
   /* ---------------- sound ---------------- */
   let ac = null, soundOn = true;
   const soundBtn = document.getElementById("btnSound");

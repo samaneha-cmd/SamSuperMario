@@ -60,35 +60,10 @@
       }, function () { return null; });
   }
 
-  function cloudSubmitScore(entry) {
-    var c = getClient();
-    if (!c) return Promise.resolve(false);
-    return c.from("leaderboard").insert({
-      name: (entry.name || "Adventurer").slice(0, 24),
-      coins: entry.coins,
-      bonus: entry.bonus,
-      time_ms: entry.timeMs
-    }).then(function (res) { return !(res && res.error); }, function () { return false; });
-  }
-
-  function cloudFetchLeaderboard(limit) {
-    var c = getClient();
-    if (!c) return Promise.resolve([]);
-    return c.from("leaderboard").select("name,coins,bonus,time_ms")
-      .order("bonus", { ascending: false })
-      .order("time_ms", { ascending: true })
-      .limit(limit || 5)
-      .then(function (res) {
-        return (res && res.data) ? res.data : [];
-      }, function () { return []; });
-  }
-
   global.SamCloud = {
     getPlayerId: getPlayerId,
     saveProgress: cloudSaveProgress,
     clearProgress: cloudClearProgress,
-    loadProgress: cloudLoadProgress,
-    submitScore: cloudSubmitScore,
-    fetchLeaderboard: cloudFetchLeaderboard
+    loadProgress: cloudLoadProgress
   };
 })(window);
