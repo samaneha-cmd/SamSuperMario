@@ -361,6 +361,11 @@
     BATS.push({ x: 90 + i * 260 + (i * 83 % 70), y: 160 + (i * 61 % 130), s: .55 + (i * 37 % 50) / 100, seed: i * 2.3 });
   }
   const TOWER_X = GOAL_X + 60;
+  const RAT_DEFS = [
+    { x: 250, range: 60 }, { x: 600, range: 70 }, { x: 1000, range: 90 },
+    { x: 1330, range: 40 }, { x: 1700, range: 100 }, { x: 2126, range: 35 },
+    { x: 2400, range: 90 }, { x: 2880, range: 90 }
+  ];
 
   /* ---------------- save / resume ---------------- */
   const SAVE_KEY = "ssm.dashCoinMeadow.save";
@@ -396,11 +401,12 @@
   const wantResume = new URLSearchParams(location.search).get("resume") === "1";
 
   /* ---------------- state ---------------- */
-  let p, items, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer;
+  let p, items, rats, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer;
 
   function reset(seed) {
-    p = { x: 90, y: GROUND_Y - 48, w: 34, h: 48, vx: 0, vy: 0, onGround: true, face: 1, phase: 0, coyote: 0, squash: 0, blink: 0 };
+    p = { x: 90, y: GROUND_Y - 48, w: 34, h: 48, vx: 0, vy: 0, onGround: true, face: 1, phase: 0, coyote: 0, squash: 0, blink: 0, hurtTimer: 0 };
     items = ALL_SPOTS.map(s => ({ x: s.x, y: s.y, bonus: s.bonus, eaten: false, bob: Math.random() * 6 }));
+    rats = RAT_DEFS.map(r => ({ x: r.x, baseX: r.x, range: r.range, dir: 1, alive: true, phase: Math.random() * 6 }));
     cam = { x: 0 };
     particles = []; pops = [];
     coinCount = 0; bonusCount = 0; tick = 0; won = false; winTimer = 0;
@@ -507,6 +513,8 @@
   function sfxCoin() { blip(920, .08, "square", .12); setTimeout(() => blip(1300, .1, "square", .1), 55); }
   function sfxBonus(n) { blip(500 + n * 40, .14, "triangle", .2); setTimeout(() => blip(760 + n * 44, .18, "triangle", .16), 80); setTimeout(() => blip(980 + n * 30, .2, "triangle", .12), 160); }
   function sfxWin() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => blip(f, .3, "triangle", .15), i * 130)); }
+  function sfxSquash() { blip(180, .05, "square", .16); setTimeout(() => blip(90, .1, "square", .12), 40); }
+  function sfxHurt() { blip(140, .16, "sawtooth", .14); }
 
   /* ---------------- physics ---------------- */
   const GRAV = 0.62, ACC = 0.55, MAXV = 4.4, FRICT = 0.82;
@@ -596,6 +604,33 @@
       }
     }
 
+    // rats
+    const RAT_W = 26, RAT_H = 18, RAT_SPEED = 1.1;
+    for (const r of rats) {
+      if (!r.alive) continue;
+      r.x += r.dir * RAT_SPEED;
+      if (r.x > r.baseX + r.range) { r.x = r.baseX + r.range; r.dir = -1; }
+      if (r.x < r.baseX - r.range) { r.x = r.baseX - r.range; r.dir = 1; }
+      r.phase += RAT_SPEED * .3;
+
+      const rBox = { x: r.x - RAT_W / 2, y: GROUND_Y - RAT_H, w: RAT_W, h: RAT_H };
+      if (overlaps(p, rBox)) {
+        if (p.vy > 1 && (p.y + p.h) < rBox.y + RAT_H * .55) {
+          r.alive = false;
+          p.vy = -8.5;
+          audioWake(); sfxSquash();
+          burst(r.x, rBox.y, "rat");
+          pops.push({ x: r.x, y: rBox.y - 16, life: 40, text: "squeak!" });
+        } else if (p.hurtTimer <= 0) {
+          p.hurtTimer = 75;
+          p.vx = (p.x + p.w / 2 < r.x ? -1 : 1) * 5.5;
+          p.vy = -6;
+          audioWake(); sfxHurt();
+        }
+      }
+    }
+    if (p.hurtTimer > 0) p.hurtTimer--;
+
     if (won) winTimer++;
 
     // particles
@@ -614,6 +649,8 @@
   function burst(x, y, kind) {
     const colors = kind === "bonus"
       ? ["#C1451F", "#E8B23A", "#E8622A", "#FFC15E"]
+      : kind === "rat"
+      ? ["#5A5158", "#3A3439", "#D9A6B0", "#F1E4D3"]
       : ["#FFD166", "#FFF1D2", "#B9862B", "#FFE9A6"];
     const n = reduceMotion ? 6 : 16;
     for (let i = 0; i < n; i++) {
@@ -969,6 +1006,40 @@
     ctx.fillText(won ? "done!" : "finish", x + 20, GROUND_Y - 118);
   }
 
+  function drawRat(r) {
+    const x = r.x - cam.x;
+    if (x < -40 || x > W + 40) return;
+    const scurry = Math.sin(r.phase) * 3;
+    const legPhase = Math.sin(r.phase * 3);
+    ctx.save();
+    ctx.translate(x, GROUND_Y - 2);
+    ctx.scale(r.dir, 1);
+    // shadow
+    ctx.beginPath(); ctx.ellipse(0, 0, 13, 3.5, 0, 0, 7); ctx.fillStyle = "rgba(10,7,6,.35)"; ctx.fill();
+    // tail
+    ctx.strokeStyle = "#C77A87"; ctx.lineWidth = 2; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-11, -6); ctx.quadraticCurveTo(-20, -2 + scurry, -24, -8 - scurry);
+    ctx.stroke();
+    // legs
+    ctx.strokeStyle = "#2E2A2E"; ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(-5, -4); ctx.lineTo(-5 + legPhase * 2, 0);
+    ctx.moveTo(5, -4); ctx.lineTo(5 - legPhase * 2, 0);
+    ctx.stroke();
+    // body
+    ctx.beginPath(); ctx.ellipse(0, -8, 13, 8, 0, 0, 7); ctx.fillStyle = "#5A5158"; ctx.fill(); outline(2.2);
+    ctx.beginPath(); ctx.ellipse(2, -5, 8, 4.5, 0, 0, 7); ctx.fillStyle = "#3A3439"; ctx.fill();
+    // head + snout
+    ctx.beginPath(); ctx.arc(11, -9, 6, 0, 7); ctx.fillStyle = "#5A5158"; ctx.fill(); outline(2.2);
+    ctx.beginPath(); ctx.ellipse(16, -7, 3.4, 2.4, 0, 0, 7); ctx.fillStyle = "#D9A6B0"; ctx.fill(); outline(1.6);
+    // ear
+    ctx.beginPath(); ctx.arc(8, -14, 3.4, 0, 7); ctx.fillStyle = "#C77A87"; ctx.fill(); outline(1.6);
+    // glowing eye
+    ctx.beginPath(); ctx.arc(12, -10, 1.6, 0, 7); ctx.fillStyle = "#E8622A"; ctx.fill();
+    ctx.restore();
+  }
+
   const HERO_SKIN = "#F2C9A1";
   const HERO_HAIR = "#5B3A29";
   const HERO_SHIRT = "#FF6FA5";
@@ -1203,7 +1274,12 @@
     drawGoal();
     for (const it of items) if (!it.eaten && !it.bonus) drawCoin(it);
     for (const it of items) if (!it.eaten && it.bonus) drawMushroom(it);
-    drawHero();
+    for (const r of rats) if (r.alive) drawRat(r);
+    if (p.hurtTimer > 0 && Math.floor(tick / 3) % 2 === 0) {
+      // brief invincibility flicker
+    } else {
+      drawHero();
+    }
     drawParticles();
     drawTip();
     drawBanner();
