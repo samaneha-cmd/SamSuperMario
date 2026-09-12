@@ -73,6 +73,8 @@
   .count small { font-size: .78rem; color: var(--ink-soft); font-family: var(--body); font-weight: 700; }
   .divider { width: 3px; align-self: stretch; background: var(--line); opacity: .25; border-radius: 3px; }
   .grow-label { font-size: .66rem; text-transform: uppercase; letter-spacing: .14em; font-weight: 900; color: var(--ink-soft); }
+  .lives { display: flex; gap: 4px; }
+  .lives .heart { width: 22px; height: 20px; display: block; }
   .meter { display: flex; gap: 4px; margin-top: 4px; }
   .pip { width: 15px; height: 8px; border-radius: 3px; background: var(--line); opacity: .18; }
   .pip.on { background: var(--leaf); opacity: 1; }
@@ -214,6 +216,10 @@
     </div>
     <div class="hud">
       <div class="stat">
+        <div class="lives" id="livesDisplay" role="img" aria-label="3 lives remaining"></div>
+      </div>
+      <div class="divider" aria-hidden="true"></div>
+      <div class="stat">
         <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
           <circle cx="14" cy="14" r="11.5" fill="#FFD166" stroke="#150F0E" stroke-width="2.4"/>
           <circle cx="14" cy="14" r="7" fill="none" stroke="#B9862B" stroke-width="2"/>
@@ -255,6 +261,16 @@
         <p class="win-stats" id="winStats">0 / 8 coins &middot; 0 / 4 bonus &middot; 0.0s</p>
         <div class="win-row">
           <button class="menu-btn" id="btnPlayAgain">Play again</button>
+          <a class="menu-btn secondary" href="index.html">Menu</a>
+        </div>
+      </div>
+    </div>
+    <div class="win-overlay" id="gameOverOverlay" hidden>
+      <div class="win-card">
+        <p class="win-title">Out of lives!</p>
+        <p class="win-stats" id="gameOverStats">Caught by the rats of the ashlands.</p>
+        <div class="win-row">
+          <button class="menu-btn" id="btnTryAgain">Try again</button>
           <a class="menu-btn secondary" href="index.html">Menu</a>
         </div>
       </div>
@@ -304,8 +320,24 @@
   const WORLD = 3700;
   const GOAL_X = 3480;
 
-  const SOLIDS = [
-    { x: -300, y: GROUND_Y, w: WORLD + 600, h: 220, kind: "ground" },
+  // Lava pits cut gaps in the ground — cross them by jumping.
+  const PITS = [
+    { x: 850, w: 70 },
+    { x: 1500, w: 90 },
+    { x: 2715, w: 70 }
+  ];
+
+  const SOLIDS = [];
+  {
+    const sorted = [...PITS].sort((a, b) => a.x - b.x);
+    let cursor = -300;
+    for (const pit of sorted) {
+      SOLIDS.push({ x: cursor, y: GROUND_Y, w: pit.x - cursor, h: 220, kind: "ground" });
+      cursor = pit.x + pit.w;
+    }
+    SOLIDS.push({ x: cursor, y: GROUND_Y, w: (WORLD + 300) - cursor, h: 220, kind: "ground" });
+  }
+  SOLIDS.push(
     { x: 420, y: 340, w: 74, h: 60, kind: "stone" },
     { x: 700, y: 340, w: 62, h: 60, kind: "crate" },
     { x: 762, y: 280, w: 62, h: 120, kind: "crate" },
@@ -322,7 +354,7 @@
     { x: 2830, y: 252, w: 150, h: 24, kind: "plank" },
     { x: 3060, y: 290, w: 58, h: 110, kind: "stump" },
     { x: 3200, y: 282, w: 166, h: 24, kind: "plank" }
-  ];
+  );
 
   // Every collectible spot in the level. `bonus:true` spots are the rarer
   // mushrooms (perched on the trickier platforms); the rest are coins.
@@ -392,6 +424,29 @@
     overlay.hidden = false;
   }
   function hideWinOverlay() { document.getElementById("winOverlay").hidden = true; }
+  function showGameOverOverlay() {
+    document.getElementById("gameOverOverlay").hidden = false;
+    clearProgress();
+  }
+  function hideGameOverOverlay() { document.getElementById("gameOverOverlay").hidden = true; }
+  function loseLife() {
+    if (dead) return;
+    lives--;
+    updateLivesHud();
+    if (lives <= 0) { dead = true; showGameOverOverlay(); }
+  }
+  function updateLivesHud() {
+    const el = document.getElementById("livesDisplay");
+    el.innerHTML = "";
+    for (let i = 0; i < MAX_LIVES; i++) {
+      const on = i < lives;
+      el.insertAdjacentHTML("beforeend",
+        '<svg class="heart" viewBox="0 0 24 22" aria-hidden="true">' +
+        '<path d="M12 20.5C12 20.5 2 14 2 7.6 2 4 4.7 1.5 7.9 1.5c2 0 3.4 1 4.1 2.4.7-1.4 2.1-2.4 4.1-2.4 3.2 0 5.9 2.5 5.9 6.1 0 6.4-10 12.9-10 12.9Z" ' +
+        'fill="' + (on ? "#E8622A" : "rgba(241,228,211,.18)") + '" stroke="#150F0E" stroke-width="1.6"/></svg>');
+    }
+    el.setAttribute("aria-label", lives + " lives remaining");
+  }
   function loadProgress() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
@@ -401,7 +456,8 @@
   const wantResume = new URLSearchParams(location.search).get("resume") === "1";
 
   /* ---------------- state ---------------- */
-  let p, items, rats, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer;
+  let p, items, rats, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer, lives, dead, lastSafeX, lastSafeY;
+  const MAX_LIVES = 3;
 
   function reset(seed) {
     p = { x: 90, y: GROUND_Y - 48, w: 34, h: 48, vx: 0, vy: 0, onGround: true, face: 1, phase: 0, coyote: 0, squash: 0, blink: 0, hurtTimer: 0 };
@@ -410,6 +466,10 @@
     cam = { x: 0 };
     particles = []; pops = [];
     coinCount = 0; bonusCount = 0; tick = 0; won = false; winTimer = 0;
+    lives = MAX_LIVES; dead = false;
+    lastSafeX = p.x; lastSafeY = p.y;
+    hideGameOverOverlay();
+    updateLivesHud();
     if (seed && (typeof seed.coinCount === "number" || typeof seed.bonusCount === "number")) {
       // restore a saved run: eat the first N coins / bonuses in level order
       let cLeft = Math.min(TOTAL_COINS, seed.coinCount | 0);
@@ -420,7 +480,7 @@
       }
       coinCount = Math.min(TOTAL_COINS, seed.coinCount | 0);
       bonusCount = Math.min(TOTAL_BONUS, seed.bonusCount | 0);
-      if (typeof seed.x === "number") { p.x = seed.x; p.y = seed.y; }
+      if (typeof seed.x === "number") { p.x = seed.x; p.y = seed.y; lastSafeX = p.x; lastSafeY = p.y; }
       applySize();
       won = coinCount >= TOTAL_COINS;
     }
@@ -482,6 +542,11 @@
     clearProgress();
     reset();
   });
+  document.getElementById("btnTryAgain").addEventListener("click", () => {
+    hideGameOverOverlay();
+    clearProgress();
+    reset();
+  });
   /* ---------------- sound ---------------- */
   let ac = null, soundOn = true;
   const soundBtn = document.getElementById("btnSound");
@@ -522,6 +587,7 @@
   function overlaps(a, s) { return a.x + a.w > s.x && a.x < s.x + s.w && a.y + a.h > s.y && a.y < s.y + s.h; }
 
   function step() {
+    if (dead) return;
     tick++;
     const f = sizeFactor();
 
@@ -570,9 +636,19 @@
     if (p.onGround && wasAir) { p.squash = 1; blip(180, .07, "sine", .06); }
     if (p.squash > 0) p.squash = Math.max(0, p.squash - .12);
     if (p.squash < 0) p.squash = Math.min(0, p.squash + .1);
+    if (p.onGround) { lastSafeX = p.x; lastSafeY = p.y; }
 
     p.phase += Math.abs(p.vx) * .14;
     p.blink = (p.blink + 1) % 260;
+
+    // fell into a lava pit — send back to the last solid ground and lose a life
+    if (p.y > GROUND_Y + 60 && !dead) {
+      p.x = lastSafeX; p.y = lastSafeY; p.vx = 0; p.vy = 0;
+      p.hurtTimer = 75;
+      audioWake(); sfxHurt();
+      burst(p.x + p.w / 2, GROUND_Y, "rat");
+      loseLife();
+    }
 
     // collectibles
     for (let i = 0; i < items.length; i++) {
@@ -626,6 +702,7 @@
           p.vx = (p.x + p.w / 2 < r.x ? -1 : 1) * 5.5;
           p.vy = -6;
           audioWake(); sfxHurt();
+          loseLife();
         }
       }
     }
@@ -823,7 +900,7 @@
     ctx.restore();
   }
 
-  function drawGround() {
+  function drawGroundSegment() {
     ctx.fillStyle = "#4A3B3C";
     ctx.fillRect(0, GROUND_Y + 22, W, H - GROUND_Y);
     ctx.fillStyle = "#3A2D2F";
@@ -864,6 +941,45 @@
     }
     ctx.strokeStyle = "#0A0706"; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
+  }
+
+  function drawLavaPit(x, w) {
+    ctx.fillStyle = "#1A1214";
+    ctx.fillRect(x, GROUND_Y - 6, w, H - GROUND_Y + 6);
+    const pulse = reduceMotion ? .8 : .7 + Math.sin(tick * .08 + x) * .2;
+    const g = ctx.createLinearGradient(0, GROUND_Y - 4, 0, GROUND_Y + 40);
+    g.addColorStop(0, "rgba(255,193,94," + pulse + ")");
+    g.addColorStop(1, "#A83E12");
+    ctx.fillStyle = g;
+    ctx.fillRect(x, GROUND_Y - 4, w, 26);
+    ctx.fillStyle = "rgba(255,225,150,.8)";
+    for (let i = 0; i < 3; i++) {
+      const bx = x + w * (.2 + i * .3) + (reduceMotion ? 0 : Math.sin(tick * .05 + i * 2) * 4);
+      const by = GROUND_Y + 4 + (reduceMotion ? 0 : Math.sin(tick * .09 + i) * 4);
+      ctx.beginPath(); ctx.arc(bx, by, 3, 0, 7); ctx.fill();
+    }
+    ctx.strokeStyle = "#0A0706"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, GROUND_Y); ctx.lineTo(x, GROUND_Y - 4);
+    ctx.moveTo(x + w, GROUND_Y); ctx.lineTo(x + w, GROUND_Y - 4);
+    ctx.stroke();
+  }
+
+  function drawGround() {
+    for (const seg of SOLIDS) {
+      if (seg.kind !== "ground") continue;
+      const sx = seg.x - cam.x, sw = seg.w;
+      if (sx + sw < 0 || sx > W) continue;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(sx, 0, sw, H); ctx.clip();
+      drawGroundSegment();
+      ctx.restore();
+    }
+    for (const pit of PITS) {
+      const px = pit.x - cam.x;
+      if (px + pit.w < 0 || px > W) continue;
+      drawLavaPit(px, pit.w);
+    }
 
     // scorched rocks, dead trees & ember pits along the ground line
     for (const b of BUSHES) {
@@ -1196,7 +1312,20 @@
     // face
     const eo = p.face * bw * .07;
     const blinking = p.blink > 250;
-    if (!blinking) {
+    const hurt = p.hurtTimer > 0;
+    if (hurt) {
+      // wide, startled eyes
+      ctx.fillStyle = "#FFFFFF";
+      ctx.beginPath(); ctx.ellipse(-headR * .34 + eo, headY + headR * .03, headR * .27, headR * .29, 0, 0, 7); ctx.fill(); outline(2);
+      ctx.beginPath(); ctx.ellipse(headR * .38 + eo, headY + headR * .03, headR * .27, headR * .29, 0, 0, 7); ctx.fill(); outline(2);
+      ctx.fillStyle = "#22331F";
+      ctx.beginPath(); ctx.arc(-headR * .34 + eo, headY + headR * .05, headR * .09, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(headR * .38 + eo, headY + headR * .05, headR * .09, 0, 7); ctx.fill();
+      // worried brows
+      ctx.strokeStyle = "#22331F"; ctx.lineWidth = 2; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(-headR * .5 + eo, headY - headR * .24); ctx.lineTo(-headR * .14 + eo, headY - headR * .12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(headR * .56 + eo, headY - headR * .24); ctx.lineTo(headR * .2 + eo, headY - headR * .12); ctx.stroke();
+    } else if (!blinking) {
       ctx.fillStyle = "#FFFFFF";
       ctx.beginPath(); ctx.ellipse(-headR * .34 + eo, headY + headR * .05, headR * .22, headR * .24, 0, 0, 7); ctx.fill(); outline(2);
       ctx.beginPath(); ctx.ellipse(headR * .38 + eo, headY + headR * .05, headR * .22, headR * .24, 0, 0, 7); ctx.fill(); outline(2);
@@ -1213,12 +1342,17 @@
       ctx.moveTo(headR * .2 + eo, headY + headR * .05); ctx.lineTo(headR * .56 + eo, headY + headR * .05); ctx.stroke();
     }
     // cheeks
-    ctx.fillStyle = "rgba(255,111,165,.35)";
+    ctx.fillStyle = hurt ? "rgba(232,98,42,.4)" : "rgba(255,111,165,.35)";
     ctx.beginPath(); ctx.ellipse(-headR * .58 + eo, headY + headR * .32, headR * .16, headR * .1, 0, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.ellipse(headR * .62 + eo, headY + headR * .32, headR * .16, headR * .1, 0, 0, 7); ctx.fill();
     // mouth
-    ctx.strokeStyle = "#22331F"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.arc(eo, headY + headR * .36, headR * .22, .2, Math.PI - .2); ctx.stroke();
+    if (hurt) {
+      ctx.beginPath(); ctx.ellipse(eo, headY + headR * .4, headR * .13, headR * .17, 0, 0, 7);
+      ctx.fillStyle = "#7A2E22"; ctx.fill(); outline(2);
+    } else {
+      ctx.strokeStyle = "#22331F"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.arc(eo, headY + headR * .36, headR * .22, .2, Math.PI - .2); ctx.stroke();
+    }
 
     ctx.restore();
   }
