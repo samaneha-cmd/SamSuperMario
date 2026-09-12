@@ -51,6 +51,7 @@
   }
   h1 em { font-style: normal; color: var(--accent); }
   .tagline { margin: 0; color: var(--ink-soft); font-size: .92rem; max-width: 44ch; }
+  .level-name { margin: 2px 0 4px; color: var(--accent); font-weight: 900; font-size: .82rem; text-transform: uppercase; letter-spacing: .06em; }
 
   .hud {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -212,7 +213,8 @@
   <header>
     <div>
       <h1>The Shadow <em>Tower</em></h1>
-      <p class="tagline">Cross the ashlands and climb toward the tower, grabbing every star-coin along the way. Keep an eye out for glowing embermushrooms hidden up high — each one makes Sam grow.</p>
+      <p class="level-name" id="levelName">Level 1: The Ashlands</p>
+      <p class="tagline">Grab every star-coin, dodge the rats, and jump the lava — three lives, no growing, just grit.</p>
     </div>
     <div class="hud">
       <div class="stat">
@@ -239,8 +241,8 @@
       </div>
       <div class="divider" aria-hidden="true"></div>
       <div>
-        <div class="grow-label">Growth</div>
-        <div class="meter" id="meter" role="img" aria-label="Growth level 0 of 4"></div>
+        <div class="grow-label">Bonus found</div>
+        <div class="meter" id="meter" role="img" aria-label="0 of 4 bonus mushrooms found"></div>
       </div>
     </div>
   </header>
@@ -257,7 +259,7 @@
     <canvas id="game" width="900" height="500" aria-label="Sam runs across the ashlands toward the shadow tower, collecting star-coins and embermushrooms"></canvas>
     <div class="win-overlay" id="winOverlay" hidden>
       <div class="win-card">
-        <p class="win-title">You reached the tower!</p>
+        <p class="win-title" id="winTitle">You reached the tower!</p>
         <p class="win-stats" id="winStats">0 / 8 coins &middot; 0 / 4 bonus &middot; 0.0s</p>
         <div class="win-row">
           <button class="menu-btn" id="btnPlayAgain">Play again</button>
@@ -315,112 +317,199 @@
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* ---------------- level ---------------- */
+  /* ---------------- levels ---------------- */
   const GROUND_Y = 400;
-  const WORLD = 3700;
-  const GOAL_X = 3480;
 
-  // Lava pits cut gaps in the ground — cross them by jumping.
-  const PITS = [
-    { x: 850, w: 70 },
-    { x: 1500, w: 90 },
-    { x: 2715, w: 70 }
-  ];
-
-  const SOLIDS = [];
-  {
-    const sorted = [...PITS].sort((a, b) => a.x - b.x);
+  function buildGroundSolids(world, pits) {
+    const solids = [];
+    const sorted = [...pits].sort((a, b) => a.x - b.x);
     let cursor = -300;
     for (const pit of sorted) {
-      SOLIDS.push({ x: cursor, y: GROUND_Y, w: pit.x - cursor, h: 220, kind: "ground" });
+      solids.push({ x: cursor, y: GROUND_Y, w: pit.x - cursor, h: 220, kind: "ground" });
       cursor = pit.x + pit.w;
     }
-    SOLIDS.push({ x: cursor, y: GROUND_Y, w: (WORLD + 300) - cursor, h: 220, kind: "ground" });
+    solids.push({ x: cursor, y: GROUND_Y, w: (world + 300) - cursor, h: 220, kind: "ground" });
+    return solids;
   }
-  SOLIDS.push(
-    { x: 420, y: 340, w: 74, h: 60, kind: "stone" },
-    { x: 700, y: 340, w: 62, h: 60, kind: "crate" },
-    { x: 762, y: 280, w: 62, h: 120, kind: "crate" },
-    { x: 980, y: 282, w: 150, h: 24, kind: "plank" },
-    { x: 1180, y: 330, w: 86, h: 70, kind: "stone" },
-    { x: 1400, y: 300, w: 54, h: 100, kind: "stump" },
-    { x: 1520, y: 262, w: 130, h: 24, kind: "plank" },
-    { x: 1730, y: 202, w: 130, h: 24, kind: "plank" },
-    { x: 1980, y: 340, w: 92, h: 60, kind: "stone" },
-    { x: 2180, y: 310, w: 72, h: 90, kind: "stump" },
-    { x: 2330, y: 272, w: 166, h: 24, kind: "plank" },
-    { x: 2560, y: 340, w: 62, h: 60, kind: "stone" },
-    { x: 2648, y: 340, w: 62, h: 60, kind: "stone" },
-    { x: 2830, y: 252, w: 150, h: 24, kind: "plank" },
-    { x: 3060, y: 290, w: 58, h: 110, kind: "stump" },
-    { x: 3200, y: 282, w: 166, h: 24, kind: "plank" }
-  );
+  function buildClouds(world) {
+    const arr = [], n = Math.max(4, Math.round(world / 400));
+    for (let i = 0; i < n; i++) arr.push({ x: i * 400 + (i * 83 % 160), y: 60 + (i * 53 % 80), s: .68 + (i * 41 % 55) / 100 });
+    return arr;
+  }
+  function buildBushes(world) {
+    const arr = [], n = Math.max(8, Math.round(world / 90));
+    for (let i = 0; i < n; i++) arr.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 4 });
+    return arr;
+  }
+  function buildHills(world) {
+    const arr = [], n = Math.max(6, Math.round(world / 230));
+    for (let i = 0; i < n; i++) arr.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
+    return arr;
+  }
+  function buildRavens(world) {
+    const arr = [], n = Math.max(4, Math.round(world / 330));
+    for (let i = 0; i < n; i++) arr.push({ x: 180 + i * 330 + (i * 71 % 90), y: 70 + (i * 53 % 90), s: .7 + (i * 41 % 60) / 100, seed: i * 1.7 });
+    return arr;
+  }
+  function buildBats(world) {
+    const arr = [], n = Math.max(5, Math.round(world / 260));
+    for (let i = 0; i < n; i++) arr.push({ x: 90 + i * 260 + (i * 83 % 70), y: 160 + (i * 61 % 130), s: .55 + (i * 37 % 50) / 100, seed: i * 2.3 });
+    return arr;
+  }
 
-  // Every collectible spot in the level. `bonus:true` spots are the rarer
-  // mushrooms (perched on the trickier platforms); the rest are coins.
-  const ALL_SPOTS = [
-    { x: 300, y: GROUND_Y, bonus: false },
-    { x: 457, y: 340, bonus: false },
-    { x: 730, y: 250, bonus: true },
-    { x: 1055, y: 282, bonus: false },
-    { x: 1223, y: 288, bonus: false },
-    { x: 1585, y: 262, bonus: false },
-    { x: 1795, y: 202, bonus: true },
-    { x: 2026, y: 300, bonus: false },
-    { x: 2413, y: 272, bonus: false },
-    { x: 2604, y: 296, bonus: true },
-    { x: 2905, y: 252, bonus: false },
-    { x: 3283, y: 282, bonus: true }
-  ];
-  const TOTAL_COINS = ALL_SPOTS.filter(s => !s.bonus).length;
-  const TOTAL_BONUS = ALL_SPOTS.filter(s => s.bonus).length;
+  function buildLevel(cfg) {
+    return {
+      name: cfg.name,
+      world: cfg.world,
+      goalX: cfg.goalX,
+      towerX: cfg.goalX + 60,
+      hasTower: !!cfg.hasTower,
+      rain: !!cfg.rain,
+      pits: cfg.pits,
+      solids: buildGroundSolids(cfg.world, cfg.pits).concat(cfg.platforms),
+      allSpots: cfg.spots,
+      totalCoins: cfg.spots.filter(s => !s.bonus).length,
+      totalBonus: cfg.spots.filter(s => s.bonus).length,
+      ratDefs: cfg.ratDefs,
+      clouds: buildClouds(cfg.world),
+      bushes: buildBushes(cfg.world),
+      hills: buildHills(cfg.world),
+      ravens: buildRavens(cfg.world),
+      bats: buildBats(cfg.world)
+    };
+  }
 
-  const CLOUDS = [
-    { x: 120, y: 78, s: 1.0 }, { x: 540, y: 122, s: .72 }, { x: 900, y: 62, s: 1.15 },
-    { x: 1320, y: 110, s: .85 }, { x: 1700, y: 74, s: 1.0 }, { x: 2120, y: 126, s: .68 },
-    { x: 2480, y: 70, s: 1.1 }, { x: 2900, y: 116, s: .8 }, { x: 3320, y: 84, s: .95 }
+  const LEVEL_DEFS = [
+    buildLevel({
+      name: "The Ashlands",
+      world: 3700, goalX: 3480, hasTower: false, rain: false,
+      pits: [{ x: 850, w: 70 }, { x: 1500, w: 90 }, { x: 2715, w: 70 }],
+      platforms: [
+        { x: 420, y: 340, w: 74, h: 60, kind: "stone" },
+        { x: 700, y: 340, w: 62, h: 60, kind: "crate" },
+        { x: 762, y: 280, w: 62, h: 120, kind: "crate" },
+        { x: 980, y: 282, w: 150, h: 24, kind: "plank" },
+        { x: 1180, y: 330, w: 86, h: 70, kind: "stone" },
+        { x: 1400, y: 300, w: 54, h: 100, kind: "stump" },
+        { x: 1520, y: 262, w: 130, h: 24, kind: "plank" },
+        { x: 1730, y: 202, w: 130, h: 24, kind: "plank" },
+        { x: 1980, y: 340, w: 92, h: 60, kind: "stone" },
+        { x: 2180, y: 310, w: 72, h: 90, kind: "stump" },
+        { x: 2330, y: 272, w: 166, h: 24, kind: "plank" },
+        { x: 2560, y: 340, w: 62, h: 60, kind: "stone" },
+        { x: 2648, y: 340, w: 62, h: 60, kind: "stone" },
+        { x: 2830, y: 252, w: 150, h: 24, kind: "plank" },
+        { x: 3060, y: 290, w: 58, h: 110, kind: "stump" },
+        { x: 3200, y: 282, w: 166, h: 24, kind: "plank" }
+      ],
+      spots: [
+        { x: 300, y: GROUND_Y, bonus: false },
+        { x: 457, y: 340, bonus: false },
+        { x: 730, y: 250, bonus: true },
+        { x: 1055, y: 282, bonus: false },
+        { x: 1223, y: 288, bonus: false },
+        { x: 1585, y: 262, bonus: false },
+        { x: 1795, y: 202, bonus: true },
+        { x: 2026, y: 300, bonus: false },
+        { x: 2413, y: 272, bonus: false },
+        { x: 2604, y: 296, bonus: true },
+        { x: 2905, y: 252, bonus: false },
+        { x: 3283, y: 282, bonus: true }
+      ],
+      ratDefs: [
+        { x: 250, range: 60 }, { x: 600, range: 70 }, { x: 1000, range: 90 },
+        { x: 1330, range: 40 }, { x: 1700, range: 100 }, { x: 2126, range: 35 },
+        { x: 2400, range: 90 }, { x: 2880, range: 90 }
+      ]
+    }),
+    buildLevel({
+      name: "Ruins in the Rain",
+      world: 2400, goalX: 2200, hasTower: true, rain: true,
+      pits: [{ x: 500, w: 80 }, { x: 1500, w: 90 }, { x: 1800, w: 70 }],
+      platforms: [
+        { x: 380, y: 340, w: 70, h: 60, kind: "stone" },
+        { x: 620, y: 300, w: 130, h: 24, kind: "plank" },
+        { x: 900, y: 340, w: 60, h: 60, kind: "crate" },
+        { x: 970, y: 280, w: 60, h: 120, kind: "crate" },
+        { x: 1150, y: 260, w: 140, h: 24, kind: "plank" },
+        { x: 1400, y: 310, w: 80, h: 90, kind: "stump" },
+        { x: 1650, y: 330, w: 90, h: 70, kind: "stone" },
+        { x: 1950, y: 270, w: 150, h: 24, kind: "plank" },
+        { x: 2050, y: 340, w: 60, h: 60, kind: "crate" }
+      ],
+      spots: [
+        { x: 250, y: GROUND_Y, bonus: false },
+        { x: 415, y: 340, bonus: false },
+        { x: 685, y: 300, bonus: true },
+        { x: 1220, y: 260, bonus: false },
+        { x: 1440, y: 310, bonus: true },
+        { x: 1690, y: 330, bonus: false },
+        { x: 2025, y: 270, bonus: false },
+        { x: 2080, y: 340, bonus: true },
+        { x: 2150, y: GROUND_Y, bonus: false }
+      ],
+      ratDefs: [
+        { x: 700, range: 90 }, { x: 1200, range: 150 },
+        { x: 1960, range: 70 }, { x: 2280, range: 60 }
+      ]
+    })
   ];
-  const BUSHES = [];
-  for (let i = 0; i < 42; i++) BUSHES.push({ x: i * 92 + (i * 137 % 60), s: .7 + (i * 53 % 70) / 100, kind: i % 4 });
-  const HILLS = [];
-  for (let i = 0; i < 16; i++) HILLS.push({ x: i * 300 + (i * 91 % 120), r: 130 + (i * 71 % 90) });
-  const RAVENS = [];
-  for (let i = 0; i < 11; i++) {
-    RAVENS.push({ x: 180 + i * 330 + (i * 71 % 90), y: 70 + (i * 53 % 90), s: .7 + (i * 41 % 60) / 100, seed: i * 1.7 });
+
+  let WORLD, GOAL_X, TOWER_X, hasTower, rain, PITS, SOLIDS, ALL_SPOTS,
+    TOTAL_COINS, TOTAL_BONUS, RAT_DEFS, CLOUDS, BUSHES, HILLS, RAVENS, BATS;
+  let currentLevelIndex = 0;
+
+  function applyLevel(idx) {
+    const lvl = LEVEL_DEFS[idx];
+    WORLD = lvl.world; GOAL_X = lvl.goalX; TOWER_X = lvl.towerX;
+    hasTower = lvl.hasTower; rain = lvl.rain;
+    PITS = lvl.pits; SOLIDS = lvl.solids; ALL_SPOTS = lvl.allSpots;
+    TOTAL_COINS = lvl.totalCoins; TOTAL_BONUS = lvl.totalBonus; RAT_DEFS = lvl.ratDefs;
+    CLOUDS = lvl.clouds; BUSHES = lvl.bushes; HILLS = lvl.hills; RAVENS = lvl.ravens; BATS = lvl.bats;
+    const nameEl = document.getElementById("levelName");
+    if (nameEl) nameEl.textContent = "Level " + (idx + 1) + ": " + lvl.name;
   }
-  const BATS = [];
-  for (let i = 0; i < 14; i++) {
-    BATS.push({ x: 90 + i * 260 + (i * 83 % 70), y: 160 + (i * 61 % 130), s: .55 + (i * 37 % 50) / 100, seed: i * 2.3 });
-  }
-  const TOWER_X = GOAL_X + 60;
-  const RAT_DEFS = [
-    { x: 250, range: 60 }, { x: 600, range: 70 }, { x: 1000, range: 90 },
-    { x: 1330, range: 40 }, { x: 1700, range: 100 }, { x: 2126, range: 35 },
-    { x: 2400, range: 90 }, { x: 2880, range: 90 }
-  ];
 
   /* ---------------- save / resume ---------------- */
   const SAVE_KEY = "ssm.dashCoinMeadow.save";
   function saveProgress() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        coinCount, bonusCount, x: p.x, y: p.y, ts: Date.now()
+        coinCount, bonusCount, x: p.x, y: p.y, lives, level: currentLevelIndex, ts: Date.now()
       }));
     } catch (e) {}
     if (window.SamCloud) window.SamCloud.saveProgress({ coinCount, bonusCount, x: p.x, y: p.y });
+  }
+  function startNewGame() {
+    currentLevelIndex = 0;
+    applyLevel(0);
+    clearProgress();
+    reset(null);
+  }
+  function goToNextLevel() {
+    currentLevelIndex++;
+    applyLevel(currentLevelIndex);
+    reset({ lives });
+    saveProgress();
   }
   function clearProgress() {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     if (window.SamCloud) window.SamCloud.clearProgress();
   }
-  function submitRunScore(winTick) {
+  function finishLevel(winTick) {
     const stats = { coins: coinCount, bonus: bonusCount, timeMs: Math.round(winTick * (1000 / 60)) };
-    setTimeout(() => showWinOverlay(stats), 550);
+    const isFinal = currentLevelIndex >= LEVEL_DEFS.length - 1;
+    setTimeout(() => showWinOverlay(stats, isFinal), 550);
   }
-  function showWinOverlay(stats) {
+  let winOverlayIsFinal = true;
+  function showWinOverlay(stats, isFinal) {
+    winOverlayIsFinal = isFinal;
     const overlay = document.getElementById("winOverlay");
+    document.getElementById("winTitle").textContent =
+      isFinal ? "You claimed the Ring!" : "Level complete!";
     document.getElementById("winStats").textContent =
       stats.coins + " / " + TOTAL_COINS + " coins · " + stats.bonus + " / " + TOTAL_BONUS + " bonus · " + (stats.timeMs / 1000).toFixed(1) + "s";
+    document.getElementById("btnPlayAgain").textContent = isFinal ? "Play again" : "Next level";
     overlay.hidden = false;
   }
   function hideWinOverlay() { document.getElementById("winOverlay").hidden = true; }
@@ -466,7 +555,8 @@
     cam = { x: 0 };
     particles = []; pops = [];
     coinCount = 0; bonusCount = 0; tick = 0; won = false; winTimer = 0;
-    lives = MAX_LIVES; dead = false;
+    dead = false;
+    lives = (seed && typeof seed.lives === "number") ? seed.lives : MAX_LIVES;
     lastSafeX = p.x; lastSafeY = p.y;
     hideGameOverOverlay();
     updateLivesHud();
@@ -487,7 +577,7 @@
     updateHud();
   }
 
-  function sizeFactor() { return 1 + Math.min(bonusCount, TOTAL_BONUS) * 0.15; }
+  function sizeFactor() { return 1; }
 
   function applySize() {
     const f = sizeFactor();
@@ -513,7 +603,7 @@
     if (k === "arrowleft" || k === "a") { setKey("left", true); e.preventDefault(); }
     else if (k === "arrowright" || k === "d") { setKey("right", true); e.preventDefault(); }
     else if (k === " " || k === "arrowup" || k === "w") { setKey("jump", true); audioWake(); e.preventDefault(); }
-    else if (k === "r") { clearProgress(); reset(); }
+    else if (k === "r") { startNewGame(); }
   });
   window.addEventListener("keyup", e => {
     const k = e.key.toLowerCase();
@@ -535,17 +625,16 @@
   bindPad(document.getElementById("btnRight"), "right");
   bindPad(document.getElementById("btnJump"), "jump");
 
-  document.getElementById("btnReset").addEventListener("click", () => { clearProgress(); reset(); });
+  document.getElementById("btnReset").addEventListener("click", () => { startNewGame(); });
 
   document.getElementById("btnPlayAgain").addEventListener("click", () => {
     hideWinOverlay();
-    clearProgress();
-    reset();
+    if (winOverlayIsFinal) startNewGame();
+    else goToNextLevel();
   });
   document.getElementById("btnTryAgain").addEventListener("click", () => {
     hideGameOverOverlay();
-    clearProgress();
-    reset();
+    startNewGame();
   });
   /* ---------------- sound ---------------- */
   let ac = null, soundOn = true;
@@ -663,7 +752,7 @@
           applySize();
           sfxBonus(bonusCount);
           burst(mx, it.y - 18, "bonus");
-          pops.push({ x: mx, y: it.y - 34, life: 56, text: "GROW!" });
+          pops.push({ x: mx, y: it.y - 34, life: 56, text: "+BONUS" });
         } else {
           coinCount++;
           sfxCoin();
@@ -674,7 +763,7 @@
         if (coinCount >= TOTAL_COINS && !won) {
           won = true; winTimer = 0; sfxWin();
           for (let k = 0; k < 5; k++) burst(p.x + p.w / 2, p.y, "coin");
-          submitRunScore(tick);
+          finishLevel(tick);
         }
         if (won) clearProgress(); else saveProgress();
       }
@@ -747,13 +836,16 @@
   const coinLabel = document.getElementById("coinLabel");
   const bonusLabel = document.getElementById("bonusLabel");
   const meter = document.getElementById("meter");
-  for (let i = 0; i < TOTAL_BONUS; i++) { const d = document.createElement("div"); d.className = "pip"; meter.appendChild(d); }
   function updateHud() {
     coinLabel.innerHTML = coinCount + ' <small>/ ' + TOTAL_COINS + ' coins</small>';
     bonusLabel.innerHTML = bonusCount + ' <small>/ ' + TOTAL_BONUS + ' bonus</small>';
+    if (meter.children.length !== TOTAL_BONUS) {
+      meter.innerHTML = "";
+      for (let i = 0; i < TOTAL_BONUS; i++) { const d = document.createElement("div"); d.className = "pip"; meter.appendChild(d); }
+    }
     const pips = meter.children;
     for (let i = 0; i < pips.length; i++) pips[i].className = "pip" + (i < bonusCount ? " on" : "");
-    meter.setAttribute("aria-label", "Growth level " + bonusCount + " of " + TOTAL_BONUS);
+    meter.setAttribute("aria-label", bonusCount + " of " + TOTAL_BONUS + " bonus mushrooms found");
   }
 
   /* ---------------- drawing ---------------- */
@@ -771,29 +863,40 @@
 
   function drawSky() {
     const g = ctx.createLinearGradient(0, 0, 0, GROUND_Y + 20);
-    g.addColorStop(0, "#1D1420");
-    g.addColorStop(.4, "#5A2430");
-    g.addColorStop(.75, "#9A4A2C");
-    g.addColorStop(1, "#C97A3E");
+    if (rain) {
+      g.addColorStop(0, "#12151D");
+      g.addColorStop(.4, "#2A3244");
+      g.addColorStop(.75, "#4A5468");
+      g.addColorStop(1, "#6E7A8C");
+    } else {
+      g.addColorStop(0, "#1D1420");
+      g.addColorStop(.4, "#5A2430");
+      g.addColorStop(.75, "#9A4A2C");
+      g.addColorStop(1, "#C97A3E");
+    }
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // smoldering sun
+    // smoldering sun (or a dim, storm-veiled disc when raining)
     const sx = 770, sy = 100, rays = reduceMotion ? 0 : tick * .0025;
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(rays);
-    ctx.fillStyle = "rgba(232, 98, 42, .28)";
-    for (let i = 0; i < 12; i++) {
-      ctx.rotate(Math.PI / 6);
-      ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(8, -82); ctx.lineTo(-8, -82); ctx.closePath(); ctx.fill();
+    if (!rain) {
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(rays);
+      ctx.fillStyle = "rgba(232, 98, 42, .28)";
+      for (let i = 0; i < 12; i++) {
+        ctx.rotate(Math.PI / 6);
+        ctx.beginPath(); ctx.moveTo(0, -40); ctx.lineTo(8, -82); ctx.lineTo(-8, -82); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(sx, sy, 36, 0, 7); ctx.fillStyle = "#C1451F"; ctx.fill(); outline(3);
+      ctx.fillStyle = "#E8783C"; ctx.beginPath(); ctx.arc(sx - 10, sy - 10, 11, 0, 7); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(sx, sy, 30, 0, 7); ctx.fillStyle = "rgba(180,190,205,.4)"; ctx.fill();
     }
-    ctx.restore();
-    ctx.beginPath(); ctx.arc(sx, sy, 36, 0, 7); ctx.fillStyle = "#C1451F"; ctx.fill(); outline(3);
-    ctx.fillStyle = "#E8783C"; ctx.beginPath(); ctx.arc(sx - 10, sy - 10, 11, 0, 7); ctx.fill();
 
     // the distant tower, looming beyond the ridgeline
-    drawTower();
+    if (hasTower) drawTower();
 
     // hills / ash ridges
     for (const hl of HILLS) {
@@ -1120,6 +1223,24 @@
     ctx.fillStyle = won ? "#4CAF6D" : "#E8B23A"; ctx.fill(); outline(3);
     ctx.font = "700 15px Nunito, sans-serif"; ctx.fillStyle = "#1C1516"; ctx.textAlign = "left";
     ctx.fillText(won ? "done!" : "finish", x + 20, GROUND_Y - 118);
+
+    if (hasTower) drawRing(x + 46);
+  }
+
+  function drawRing(x) {
+    const bobY = GROUND_Y - 182 + (reduceMotion ? 0 : Math.sin(tick * .04) * 6);
+    const spin = reduceMotion ? 1 : Math.abs(Math.cos(tick * .03));
+    const glow = won ? 1 : (reduceMotion ? .6 : .5 + Math.sin(tick * .07) * .25);
+    const g = ctx.createRadialGradient(x, bobY, 2, x, bobY, 26);
+    g.addColorStop(0, "rgba(255,214,130," + (glow * .9) + ")");
+    g.addColorStop(1, "rgba(255,214,130,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, bobY, 26, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(x, bobY); ctx.scale(Math.max(.25, spin), 1);
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, 7);
+    ctx.lineWidth = 5; ctx.strokeStyle = "#E8B23A"; ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#FFE9A6"; ctx.stroke();
+    ctx.restore();
   }
 
   function drawRat(r) {
@@ -1158,16 +1279,16 @@
 
   const HERO_SKIN = "#F2C9A1";
   const HERO_HAIR = "#5B3A29";
-  const HERO_SHIRT = "#FF6FA5";
-  const HERO_SHIRT_LIGHT = "#FF8FBE";
-  const HERO_OVERALLS = "#2BADA0";
-  const HERO_OVERALLS_DEEP = "#1E8578";
-  const HERO_CAP = "#FF6FA5";
-  const HERO_CAP_BRIM = "#E14C8D";
-  const HERO_GLOVE = "#FFFCF2";
+  const HERO_SHIRT = "#C1541F";
+  const HERO_SHIRT_LIGHT = "#D97538";
+  const HERO_OVERALLS = "#2A2E33";
+  const HERO_OVERALLS_DEEP = "#17191C";
+  const HERO_CAP = "#D9941F";
+  const HERO_CAP_BRIM = "#A86A14";
+  const HERO_GLOVE = "#7A5334";
   const HERO_SHOE = "#6B4A2A";
-  const HERO_CLOAK = "#233539";
-  const HERO_CLOAK_DEEP = "#152023";
+  const HERO_CLOAK = "#5C1F2E";
+  const HERO_CLOAK_DEEP = "#3D131D";
   const SWORD_GLOW = "#5AE6FF";
   const SWORD_CORE = "#E9FEFF";
 
@@ -1304,9 +1425,15 @@
     ctx.beginPath(); ctx.ellipse(0, 0, headR * .46, headR * .2, 0, 0, 7);
     ctx.fillStyle = HERO_CAP_BRIM; ctx.fill(); outline(2);
     ctx.restore();
-    ctx.fillStyle = "#FFFCF2";
     ctx.save(); ctx.translate(0, headY - headR * .42);
-    star(0, 0, headR * .22, headR * .1, 5); ctx.fill(); outline(1.4);
+    ctx.beginPath();
+    ctx.moveTo(0, -headR * .22);
+    ctx.quadraticCurveTo(headR * .17, -headR * .04, headR * .09, headR * .12);
+    ctx.quadraticCurveTo(headR * .05, headR * .2, 0, headR * .17);
+    ctx.quadraticCurveTo(-headR * .05, headR * .2, -headR * .09, headR * .12);
+    ctx.quadraticCurveTo(-headR * .17, -headR * .04, 0, -headR * .22);
+    ctx.closePath();
+    ctx.fillStyle = "#C1451F"; ctx.fill(); outline(1.4);
     ctx.restore();
 
     // face
@@ -1374,6 +1501,18 @@
     }
   }
 
+  const RAIN_DROPS = [];
+  for (let i = 0; i < 70; i++) {
+    RAIN_DROPS.push({ x: (i * 37) % (W + 60), y: (i * 53) % H, len: 14 + (i * 13 % 12), speed: 7 + (i * 7 % 5) });
+  }
+  function drawRain() {
+    ctx.strokeStyle = "rgba(200,220,255,.32)"; ctx.lineWidth = 1.4; ctx.lineCap = "round";
+    for (const d of RAIN_DROPS) {
+      const y = reduceMotion ? d.y : ((d.y + tick * d.speed) % (H + 40)) - 20;
+      ctx.beginPath(); ctx.moveTo(d.x - 4, y); ctx.lineTo(d.x, y + d.len); ctx.stroke();
+    }
+  }
+
   function drawBanner() {
     if (!won || winTimer < 4) return;
     const a = Math.min(1, winTimer / 20);
@@ -1384,7 +1523,7 @@
     ctx.font = '400 32px "Titan One", sans-serif'; ctx.fillStyle = "#F1E4D3";
     ctx.fillText("All coins collected!", W / 2, by + 52);
     ctx.font = '700 16px Nunito, sans-serif'; ctx.fillStyle = "#BC9C86";
-    ctx.fillText(bonusCount + " of " + TOTAL_BONUS + " bonus mushrooms found — press R or Start over.", W / 2, by + 86);
+    ctx.fillText(bonusCount + " of " + TOTAL_BONUS + " bonus mushrooms found.", W / 2, by + 86);
     ctx.globalAlpha = 1;
   }
 
@@ -1417,6 +1556,7 @@
     drawParticles();
     drawTip();
     drawBanner();
+    if (rain) drawRain();
   }
 
   /* ---------------- loop ---------------- */
@@ -1432,6 +1572,9 @@
   }
 
   function start(saved) {
+    const lvlIdx = (saved && typeof saved.level === "number") ? saved.level : 0;
+    currentLevelIndex = Math.min(LEVEL_DEFS.length - 1, Math.max(0, lvlIdx | 0));
+    applyLevel(currentLevelIndex);
     reset(saved);
     requestAnimationFrame(frame);
   }
