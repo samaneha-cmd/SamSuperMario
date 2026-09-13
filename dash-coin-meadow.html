@@ -1308,7 +1308,54 @@
     rr(-bw * .1, bh * .21, bw * .2, bh * .045, 3); ctx.fill(); outline(1.4);
   }
 
+  const HERO_SPRITES = {
+    idle: { src: "assets/hero/hero-idle.png", w: 227, h: 300, ax: 87.4, ay: 295 },
+    runA: { src: "assets/hero/hero-run-a.png", w: 271, h: 293, ax: 117.0, ay: 288 },
+    runB: { src: "assets/hero/hero-run-b.png", w: 270, h: 297, ax: 116.7, ay: 292 },
+    jump: { src: "assets/hero/hero-jump.png", w: 212, h: 289, ax: 90.1, ay: 284 },
+  };
+  const HERO_SPRITE_SCALE = 100 / HERO_SPRITES.idle.h;
+  let heroSpritesReady = false;
+  (function loadHeroSprites() {
+    const keys = Object.keys(HERO_SPRITES);
+    let remaining = keys.length;
+    for (const k of keys) {
+      const def = HERO_SPRITES[k];
+      const img = new Image();
+      img.onload = () => { if (--remaining === 0) heroSpritesReady = true; };
+      img.onerror = () => { heroSpritesReady = false; };
+      img.src = def.src;
+      def.img = img;
+    }
+  })();
+
   function drawHero() {
+    if (!heroSpritesReady) { drawHeroFallback(); return; }
+    const cx = p.x + p.w / 2 - cam.x;
+    const by = p.y + p.h;
+    const sq = p.squash;
+    const sy = 1 + sq * -.16 + (sq < 0 ? .12 : 0);
+    const sx = 1 + sq * .14 + (sq < 0 ? -.08 : 0);
+    const bw = p.w;
+
+    ctx.beginPath();
+    ctx.ellipse(cx, GROUND_Y + 6, bw * .5, 6, 0, 0, 7);
+    ctx.fillStyle = "rgba(43,59,33,.18)"; ctx.fill();
+
+    const moving = Math.abs(p.vx) > .3;
+    let frame;
+    if (!p.onGround) frame = HERO_SPRITES.jump;
+    else if (moving) frame = Math.sin(p.phase) >= 0 ? HERO_SPRITES.runA : HERO_SPRITES.runB;
+    else frame = HERO_SPRITES.idle;
+
+    ctx.save();
+    ctx.translate(cx, by);
+    ctx.scale(p.face * HERO_SPRITE_SCALE * sx, HERO_SPRITE_SCALE * sy);
+    ctx.drawImage(frame.img, -frame.ax, -frame.ay, frame.w, frame.h);
+    ctx.restore();
+  }
+
+  function drawHeroFallback() {
     const cx = p.x + p.w / 2 - cam.x;
     const by = p.y + p.h;
     const sq = p.squash;
