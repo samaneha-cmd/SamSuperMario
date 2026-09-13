@@ -214,7 +214,7 @@
     <div>
       <h1>The Shadow <em>Tower</em></h1>
       <p class="level-name" id="levelName">Level 1: The Ashlands</p>
-      <p class="tagline">Grab every star-coin, dodge the rats, and jump the lava — three lives, no growing, just grit.</p>
+      <p class="tagline" id="levelTagline">Grab every star-coin, dodge the rats, and jump the lava — three lives, no growing, just grit.</p>
     </div>
     <div class="hud">
       <div class="stat">
@@ -360,17 +360,21 @@
   function buildLevel(cfg) {
     return {
       name: cfg.name,
+      difficulty: cfg.difficulty || "Easy",
+      tagline: cfg.tagline || "",
       world: cfg.world,
       goalX: cfg.goalX,
       towerX: cfg.goalX + 60,
       hasTower: !!cfg.hasTower,
       rain: !!cfg.rain,
+      enemySpeed: cfg.enemySpeed || 1,
       pits: cfg.pits,
       solids: buildGroundSolids(cfg.world, cfg.pits).concat(cfg.platforms),
       allSpots: cfg.spots,
       totalCoins: cfg.spots.filter(s => !s.bonus).length,
       totalBonus: cfg.spots.filter(s => s.bonus).length,
       ratDefs: cfg.ratDefs,
+      flyerDefs: cfg.flyerDefs || [],
       clouds: buildClouds(cfg.world),
       bushes: buildBushes(cfg.world),
       hills: buildHills(cfg.world),
@@ -382,7 +386,9 @@
   const LEVEL_DEFS = [
     buildLevel({
       name: "The Ashlands",
-      world: 3700, goalX: 3480, hasTower: false, rain: false,
+      difficulty: "Easy",
+      tagline: "Grab every star-coin, dodge the rats, and jump the lava — three lives, no growing, just grit.",
+      world: 3700, goalX: 3480, hasTower: false, rain: false, enemySpeed: 1,
       pits: [{ x: 850, w: 70 }, { x: 1500, w: 90 }, { x: 2715, w: 70 }],
       platforms: [
         { x: 420, y: 340, w: 74, h: 60, kind: "stone" },
@@ -420,11 +426,14 @@
         { x: 250, range: 60 }, { x: 600, range: 70 }, { x: 1000, range: 90 },
         { x: 1330, range: 40 }, { x: 1700, range: 100 }, { x: 2126, range: 35 },
         { x: 2400, range: 90 }, { x: 2880, range: 90 }
-      ]
+      ],
+      flyerDefs: []
     }),
     buildLevel({
       name: "Ruins in the Rain",
-      world: 2400, goalX: 2200, hasTower: true, rain: true,
+      difficulty: "Medium",
+      tagline: "Rats on the ground, bats in the storm — watch the sky as much as your feet.",
+      world: 2400, goalX: 2200, hasTower: false, rain: true, enemySpeed: 1.15,
       pits: [{ x: 500, w: 80 }, { x: 1500, w: 90 }, { x: 1800, w: 70 }],
       platforms: [
         { x: 380, y: 340, w: 70, h: 60, kind: "stone" },
@@ -451,23 +460,83 @@
       ratDefs: [
         { x: 700, range: 90 }, { x: 1200, range: 150 },
         { x: 1960, range: 70 }, { x: 2280, range: 60 }
+      ],
+      flyerDefs: [
+        { x: 350, y: GROUND_Y - 140, range: 60 },
+        { x: 1680, y: GROUND_Y - 150, range: 60 }
+      ]
+    }),
+    buildLevel({
+      name: "The Black Gate",
+      difficulty: "Hard",
+      tagline: "The tower is close. Rats, bats, and wide lava pits — one more push to claim the Ring.",
+      world: 3000, goalX: 2800, hasTower: true, rain: false, enemySpeed: 1.3,
+      pits: [{ x: 620, w: 80 }, { x: 1280, w: 90 }, { x: 1900, w: 100 }, { x: 2450, w: 90 }],
+      platforms: [
+        { x: 300, y: 340, w: 70, h: 60, kind: "stone" },
+        { x: 470, y: 280, w: 140, h: 24, kind: "plank" },
+        { x: 700, y: 340, w: 60, h: 60, kind: "crate" },
+        { x: 900, y: 300, w: 60, h: 110, kind: "stump" },
+        { x: 1030, y: 250, w: 150, h: 24, kind: "plank" },
+        { x: 1230, y: 330, w: 90, h: 70, kind: "stone" },
+        { x: 1380, y: 280, w: 130, h: 24, kind: "plank" },
+        { x: 1560, y: 320, w: 70, h: 90, kind: "stump" },
+        { x: 1700, y: 260, w: 160, h: 24, kind: "plank" },
+        { x: 2000, y: 340, w: 60, h: 60, kind: "crate" },
+        { x: 2080, y: 290, w: 140, h: 24, kind: "plank" },
+        { x: 2280, y: 330, w: 90, h: 70, kind: "stone" },
+        { x: 2560, y: 270, w: 150, h: 24, kind: "plank" },
+        { x: 2750, y: 300, w: 60, h: 110, kind: "stump" }
+      ],
+      spots: [
+        { x: 200, y: GROUND_Y, bonus: false },
+        { x: 335, y: 340, bonus: false },
+        { x: 540, y: 280, bonus: true },
+        { x: 730, y: 340, bonus: false },
+        { x: 930, y: 300, bonus: false },
+        { x: 1105, y: 250, bonus: true },
+        { x: 1275, y: 330, bonus: false },
+        { x: 1445, y: 280, bonus: false },
+        { x: 1595, y: 320, bonus: true },
+        { x: 1780, y: 260, bonus: false },
+        { x: 2030, y: 340, bonus: false },
+        { x: 2150, y: 290, bonus: false },
+        { x: 2325, y: 330, bonus: true },
+        { x: 2635, y: 270, bonus: false },
+        { x: 2780, y: 300, bonus: false },
+        { x: 2870, y: GROUND_Y, bonus: false }
+      ],
+      ratDefs: [
+        { x: 260, range: 60 }, { x: 560, range: 70 }, { x: 950, range: 90 },
+        { x: 1420, range: 60 }, { x: 1750, range: 100 }, { x: 2200, range: 70 },
+        { x: 2600, range: 90 }
+      ],
+      flyerDefs: [
+        { x: 780, y: GROUND_Y - 140, range: 50 },
+        { x: 1150, y: GROUND_Y - 160, range: 80 },
+        { x: 1560, y: GROUND_Y - 130, range: 50 },
+        { x: 2370, y: GROUND_Y - 150, range: 50 }
       ]
     })
   ];
 
   let WORLD, GOAL_X, TOWER_X, hasTower, rain, PITS, SOLIDS, ALL_SPOTS,
-    TOTAL_COINS, TOTAL_BONUS, RAT_DEFS, CLOUDS, BUSHES, HILLS, RAVENS, BATS;
+    TOTAL_COINS, TOTAL_BONUS, RAT_DEFS, FLYER_DEFS, ENEMY_SPEED_MUL,
+    CLOUDS, BUSHES, HILLS, RAVENS, BATS;
   let currentLevelIndex = 0;
 
   function applyLevel(idx) {
     const lvl = LEVEL_DEFS[idx];
     WORLD = lvl.world; GOAL_X = lvl.goalX; TOWER_X = lvl.towerX;
-    hasTower = lvl.hasTower; rain = lvl.rain;
+    hasTower = lvl.hasTower; rain = lvl.rain; ENEMY_SPEED_MUL = lvl.enemySpeed;
     PITS = lvl.pits; SOLIDS = lvl.solids; ALL_SPOTS = lvl.allSpots;
-    TOTAL_COINS = lvl.totalCoins; TOTAL_BONUS = lvl.totalBonus; RAT_DEFS = lvl.ratDefs;
+    TOTAL_COINS = lvl.totalCoins; TOTAL_BONUS = lvl.totalBonus;
+    RAT_DEFS = lvl.ratDefs; FLYER_DEFS = lvl.flyerDefs;
     CLOUDS = lvl.clouds; BUSHES = lvl.bushes; HILLS = lvl.hills; RAVENS = lvl.ravens; BATS = lvl.bats;
     const nameEl = document.getElementById("levelName");
-    if (nameEl) nameEl.textContent = "Level " + (idx + 1) + ": " + lvl.name;
+    if (nameEl) nameEl.textContent = "Level " + (idx + 1) + ": " + lvl.name + " (" + lvl.difficulty + ")";
+    const tagEl = document.getElementById("levelTagline");
+    if (tagEl && lvl.tagline) tagEl.textContent = lvl.tagline;
   }
 
   /* ---------------- save / resume ---------------- */
@@ -502,6 +571,7 @@
     setTimeout(() => showWinOverlay(stats, isFinal), 550);
   }
   let winOverlayIsFinal = true;
+  let winAutoAdvanceTimer = null;
   function showWinOverlay(stats, isFinal) {
     winOverlayIsFinal = isFinal;
     const overlay = document.getElementById("winOverlay");
@@ -511,8 +581,19 @@
       stats.coins + " / " + TOTAL_COINS + " coins · " + stats.bonus + " / " + TOTAL_BONUS + " bonus · " + (stats.timeMs / 1000).toFixed(1) + "s";
     document.getElementById("btnPlayAgain").textContent = isFinal ? "Play again" : "Next level";
     overlay.hidden = false;
+    if (winAutoAdvanceTimer) { clearTimeout(winAutoAdvanceTimer); winAutoAdvanceTimer = null; }
+    if (!isFinal) {
+      winAutoAdvanceTimer = setTimeout(() => {
+        winAutoAdvanceTimer = null;
+        hideWinOverlay();
+        goToNextLevel();
+      }, 2200);
+    }
   }
-  function hideWinOverlay() { document.getElementById("winOverlay").hidden = true; }
+  function hideWinOverlay() {
+    document.getElementById("winOverlay").hidden = true;
+    if (winAutoAdvanceTimer) { clearTimeout(winAutoAdvanceTimer); winAutoAdvanceTimer = null; }
+  }
   function showGameOverOverlay() {
     document.getElementById("gameOverOverlay").hidden = false;
     clearProgress();
@@ -545,13 +626,14 @@
   const wantResume = new URLSearchParams(location.search).get("resume") === "1";
 
   /* ---------------- state ---------------- */
-  let p, items, rats, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer, lives, dead, lastSafeX, lastSafeY;
+  let p, items, rats, flyers, cam, particles, pops, coinCount, bonusCount, tick, won, winTimer, lives, dead, lastSafeX, lastSafeY;
   const MAX_LIVES = 3;
 
   function reset(seed) {
     p = { x: 90, y: GROUND_Y - 48, w: 34, h: 48, vx: 0, vy: 0, onGround: true, face: 1, phase: 0, coyote: 0, squash: 0, blink: 0, hurtTimer: 0 };
     items = ALL_SPOTS.map(s => ({ x: s.x, y: s.y, bonus: s.bonus, eaten: false, bob: Math.random() * 6 }));
     rats = RAT_DEFS.map(r => ({ x: r.x, baseX: r.x, range: r.range, dir: 1, alive: true, phase: Math.random() * 6 }));
+    flyers = FLYER_DEFS.map(f => ({ x: f.x, baseX: f.x, y: f.y, baseY: f.y, range: f.range, dir: 1, alive: true, phase: Math.random() * 6 }));
     cam = { x: 0 };
     particles = []; pops = [];
     coinCount = 0; bonusCount = 0; tick = 0; won = false; winTimer = 0;
@@ -770,7 +852,7 @@
     }
 
     // rats
-    const RAT_W = 26, RAT_H = 18, RAT_SPEED = 1.1;
+    const RAT_W = 26, RAT_H = 18, RAT_SPEED = 1.1 * ENEMY_SPEED_MUL;
     for (const r of rats) {
       if (!r.alive) continue;
       r.x += r.dir * RAT_SPEED;
@@ -789,6 +871,34 @@
         } else if (p.hurtTimer <= 0) {
           p.hurtTimer = 75;
           p.vx = (p.x + p.w / 2 < r.x ? -1 : 1) * 5.5;
+          p.vy = -6;
+          audioWake(); sfxHurt();
+          loseLife();
+        }
+      }
+    }
+
+    // bats (flying enemies)
+    const FLYER_W = 30, FLYER_H = 20, FLYER_SPEED = 1.6 * ENEMY_SPEED_MUL;
+    for (const b of flyers) {
+      if (!b.alive) continue;
+      b.x += b.dir * FLYER_SPEED;
+      if (b.x > b.baseX + b.range) { b.x = b.baseX + b.range; b.dir = -1; }
+      if (b.x < b.baseX - b.range) { b.x = b.baseX - b.range; b.dir = 1; }
+      b.phase += FLYER_SPEED * .25;
+      b.y = b.baseY + Math.sin(b.phase * 1.3) * 14;
+
+      const bBox = { x: b.x - FLYER_W / 2, y: b.y - FLYER_H / 2, w: FLYER_W, h: FLYER_H };
+      if (overlaps(p, bBox)) {
+        if (p.vy > 1 && (p.y + p.h) < bBox.y + FLYER_H * .55) {
+          b.alive = false;
+          p.vy = -8.5;
+          audioWake(); sfxSquash();
+          burst(b.x, bBox.y, "rat");
+          pops.push({ x: b.x, y: bBox.y - 16, life: 40, text: "screech!" });
+        } else if (p.hurtTimer <= 0) {
+          p.hurtTimer = 75;
+          p.vx = (p.x + p.w / 2 < b.x ? -1 : 1) * 5.5;
           p.vy = -6;
           audioWake(); sfxHurt();
           loseLife();
@@ -1211,24 +1321,65 @@
 
   function drawGoal() {
     const x = GOAL_X - cam.x;
-    if (x < -80 || x > W + 120) return;
-    rr(x, GROUND_Y - 150, 9, 150, 4); ctx.fillStyle = "#3D2A1C"; ctx.fill(); outline(3);
-    const wave = reduceMotion ? 0 : Math.sin(tick * .08) * 6;
-    ctx.beginPath();
-    ctx.moveTo(x + 8, GROUND_Y - 148);
-    ctx.quadraticCurveTo(x + 50, GROUND_Y - 140 + wave, x + 86, GROUND_Y - 132);
-    ctx.lineTo(x + 86, GROUND_Y - 102);
-    ctx.quadraticCurveTo(x + 50, GROUND_Y - 96 + wave, x + 8, GROUND_Y - 104);
-    ctx.closePath();
-    ctx.fillStyle = won ? "#4CAF6D" : "#E8B23A"; ctx.fill(); outline(3);
-    ctx.font = "700 15px Nunito, sans-serif"; ctx.fillStyle = "#1C1516"; ctx.textAlign = "left";
-    ctx.fillText(won ? "done!" : "finish", x + 20, GROUND_Y - 118);
+    if (x < -110 || x > W + 150) return;
+    const gateW = 92, topY = GROUND_Y - 172;
+    const litGlow = won ? 1 : (reduceMotion ? .55 : .45 + Math.sin(tick * .06) * .25);
 
-    if (hasTower) drawRing(x + 46);
+    // twin stone pillars, each capped and lit by a torch
+    for (const px of [x, x + gateW]) {
+      rr(px - 12, GROUND_Y - 8, 24, 8, 2); ctx.fillStyle = "#1C1416"; ctx.fill(); outline(2.4);
+      rr(px - 9, topY, 18, GROUND_Y - topY - 8, 3); ctx.fillStyle = "#3D2A2C"; ctx.fill(); outline(2.6);
+      ctx.strokeStyle = "rgba(0,0,0,.32)"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(px, topY + 12); ctx.lineTo(px, GROUND_Y - 14); ctx.stroke();
+      rr(px - 14, topY - 11, 28, 15, 3); ctx.fillStyle = "#241A1E"; ctx.fill(); outline(2.4);
+
+      const flick = reduceMotion ? .8 : .7 + Math.sin(tick * .17 + px) * .3;
+      const tg = ctx.createRadialGradient(px, topY + 26, 1, px, topY + 26, 20 * flick);
+      tg.addColorStop(0, "rgba(255,150,60,.85)");
+      tg.addColorStop(1, "rgba(255,120,40,0)");
+      ctx.fillStyle = tg;
+      ctx.beginPath(); ctx.arc(px, topY + 26, 20 * flick, 0, 7); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px, topY + 32);
+      ctx.quadraticCurveTo(px + 5 * flick, topY + 20, px, topY + 12);
+      ctx.quadraticCurveTo(px - 5 * flick, topY + 20, px, topY + 32);
+      ctx.fillStyle = "#FFC15E"; ctx.fill();
+    }
+
+    // lintel spanning the two pillars
+    rr(x - 16, topY - 22, gateW + 32, 15, 4); ctx.fillStyle = "#2E2126"; ctx.fill(); outline(2.6);
+
+    // glowing rune at the arch's crown — brightens on completion
+    const runeX = x + gateW / 2;
+    const runeCol = won ? "124,230,160" : "255,190,90";
+    const rg = ctx.createRadialGradient(runeX, topY - 14, 1, runeX, topY - 14, 17 * litGlow);
+    rg.addColorStop(0, "rgba(" + runeCol + "," + (litGlow * .9) + ")");
+    rg.addColorStop(1, "rgba(" + runeCol + ",0)");
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(runeX, topY - 14, 17 * litGlow, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(runeX, topY - 14, 7, 0, 7);
+    ctx.lineWidth = 3; ctx.strokeStyle = won ? "#7CE6A0" : "#E8B23A"; ctx.stroke();
+    ctx.lineWidth = 1.4; ctx.strokeStyle = "#FFE9A6"; ctx.stroke();
+
+    // pennant banner hanging beneath the arch
+    const wave = reduceMotion ? 0 : Math.sin(tick * .08) * 5;
+    ctx.beginPath();
+    ctx.moveTo(runeX - 46, topY - 6);
+    ctx.lineTo(runeX + 46, topY - 6);
+    ctx.lineTo(runeX + 40, topY + 28 + wave);
+    ctx.lineTo(runeX, topY + 20 + wave * .6);
+    ctx.lineTo(runeX - 40, topY + 28 + wave);
+    ctx.closePath();
+    ctx.fillStyle = won ? "#4CAF6D" : "#8C2430"; ctx.fill(); outline(2.6);
+    ctx.font = "700 14px Nunito, sans-serif"; ctx.fillStyle = "#FFF1D2"; ctx.textAlign = "center";
+    ctx.fillText(won ? "DONE!" : "FINISH", runeX, topY + 15 + wave * .3);
+    ctx.textAlign = "left";
+
+    if (hasTower) drawRing(runeX);
   }
 
   function drawRing(x) {
-    const bobY = GROUND_Y - 182 + (reduceMotion ? 0 : Math.sin(tick * .04) * 6);
+    const bobY = GROUND_Y - 224 + (reduceMotion ? 0 : Math.sin(tick * .04) * 6);
     const spin = reduceMotion ? 1 : Math.abs(Math.cos(tick * .03));
     const glow = won ? 1 : (reduceMotion ? .6 : .5 + Math.sin(tick * .07) * .25);
     const g = ctx.createRadialGradient(x, bobY, 2, x, bobY, 26);
@@ -1274,6 +1425,43 @@
     ctx.beginPath(); ctx.arc(8, -14, 3.4, 0, 7); ctx.fillStyle = "#C77A87"; ctx.fill(); outline(1.6);
     // glowing eye
     ctx.beginPath(); ctx.arc(12, -10, 1.6, 0, 7); ctx.fillStyle = "#E8622A"; ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlyer(b) {
+    const x = b.x - cam.x;
+    if (x < -50 || x > W + 50) return;
+    const flap = Math.sin(b.phase * 2.2);
+    ctx.save();
+    ctx.translate(x, b.y);
+    ctx.scale(b.dir, 1);
+    // faint hover shadow (fixed to ground, doesn't move with the bat)
+    const groundDist = Math.max(0, GROUND_Y - b.y);
+    ctx.beginPath(); ctx.ellipse(0, groundDist, 14, 3.5, 0, 0, 7);
+    ctx.fillStyle = "rgba(10,7,6," + Math.max(.05, .22 - groundDist * .0006) + ")"; ctx.fill();
+    // wings
+    ctx.fillStyle = "#2A2226";
+    ctx.beginPath();
+    ctx.moveTo(-3, -1);
+    ctx.quadraticCurveTo(-16, -7 + flap * 7, -21, 4 + flap * 5);
+    ctx.quadraticCurveTo(-11, 1, -3, 3);
+    ctx.closePath(); ctx.fill(); outline(1.6);
+    ctx.beginPath();
+    ctx.moveTo(3, -1);
+    ctx.quadraticCurveTo(16, -7 - flap * 7, 21, 4 - flap * 5);
+    ctx.quadraticCurveTo(11, 1, 3, 3);
+    ctx.closePath(); ctx.fill(); outline(1.6);
+    // body
+    ctx.beginPath(); ctx.ellipse(0, 0, 7.5, 8.5, 0, 0, 7); ctx.fillStyle = "#3A3439"; ctx.fill(); outline(2);
+    // ears
+    ctx.beginPath(); ctx.moveTo(-5, -6); ctx.lineTo(-8, -13); ctx.lineTo(-2, -8); ctx.closePath();
+    ctx.fillStyle = "#2A2226"; ctx.fill(); outline(1.2);
+    ctx.beginPath(); ctx.moveTo(5, -6); ctx.lineTo(8, -13); ctx.lineTo(2, -8); ctx.closePath();
+    ctx.fill(); outline(1.2);
+    // glowing eyes
+    ctx.fillStyle = "#E8622A";
+    ctx.beginPath(); ctx.arc(-3, -1, 1.5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(3, -1, 1.5, 0, 7); ctx.fill();
     ctx.restore();
   }
 
@@ -1595,6 +1783,7 @@
     for (const it of items) if (!it.eaten && !it.bonus) drawCoin(it);
     for (const it of items) if (!it.eaten && it.bonus) drawMushroom(it);
     for (const r of rats) if (r.alive) drawRat(r);
+    for (const b of flyers) if (b.alive) drawFlyer(b);
     if (p.hurtTimer > 0 && Math.floor(tick / 3) % 2 === 0) {
       // brief invincibility flicker
     } else {
